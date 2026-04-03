@@ -1,0 +1,23 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron-manha",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron-noite",
+      "schedule": "0 22 * * *"
+    }
+  ],
+  "functions": {
+    "api/cron-manha.js": {
+      "maxDuration": 60
+    },
+    "api/cron-noite.js": {
+      "maxDuration": 60
+    },
+    "api/webhook.js": {
+      "maxDuration": 30
+    }
+  }
+}
