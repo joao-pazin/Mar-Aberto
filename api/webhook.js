@@ -11,11 +11,19 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Responde imediatamente ao Telegram para evitar timeout
-  res.status(200).end('OK');
+  // Lê o body manualmente (Node.js não faz parse automático)
+  let body;
+  try {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    body = JSON.parse(Buffer.concat(chunks).toString());
+  } catch (e) {
+    res.status(200).end('OK');
+    return;
+  }
 
-  const body = req.body;
-  if (!body) return;
+  // Responde imediatamente ao Telegram
+  res.status(200).end('OK');
 
   const message = body.message || body.callback_query?.message;
   const callbackQuery = body.callback_query;
