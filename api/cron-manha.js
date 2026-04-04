@@ -3,7 +3,7 @@ import { sendScheduledAlert, sendMessage } from '../lib/telegram.js';
 import { getSubscribers } from '../lib/sheets.js';
 import { getAccessibleBeaches } from '../lib/billing.js';
 
-export const config = { runtime: 'edge' };
+export const config = { runtime: 'nodejs' };
 
 export default async function handler(req) {
   const authHeader = req.headers.get('authorization');
