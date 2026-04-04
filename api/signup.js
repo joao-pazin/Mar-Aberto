@@ -1,4 +1,4 @@
-export const config = { runtime: 'nodejs' };
+export const config = { runtime: 'edge' };
 
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
 
@@ -57,7 +57,7 @@ export default async function handler(req) {
       throw new Error(result.error || 'Erro no Apps Script');
     }
 
-    const linkCode = Buffer.from(email.toLowerCase().trim()).toString('base64').replace(/=/g, '');
+    const linkCode = btoa(email.toLowerCase().trim()).replace(/=/g, '');
     const botLink = `https://t.me/${process.env.TELEGRAM_BOT_USERNAME}?start=${linkCode}`;
 
     return json({ success: true, isNew: true, botLink });
