@@ -1,5 +1,5 @@
 import { fetchBeach, fetchAllBeaches } from '../lib/openmeteo.js';
-import { formatDayForecast, formatWeekSummary, sendMessage, sendPhoto } from '../lib/telegram.js';
+import { formatDayForecast, formatWeekSummary, sendMessage } from '../lib/telegram.js';
 import { addSubscriber, removeSubscriber, getSubscriber, updateSubscriberBeaches } from '../lib/sheets.js';
 import { BEACHES } from '../lib/beaches.js';
 
