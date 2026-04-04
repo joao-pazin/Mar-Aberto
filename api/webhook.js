@@ -11,18 +11,20 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Lê o body ANTES de responder
   let body;
   try {
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
-    body = JSON.parse(Buffer.concat(chunks).toString());
+    const raw = Buffer.concat(chunks).toString();
+    console.log('[WEBHOOK] raw:', raw.substring(0, 200));
+    body = JSON.parse(raw);
+    console.log('[WEBHOOK] message:', body?.message?.text, 'callback:', body?.callback_query?.data);
   } catch (e) {
+    console.log('[WEBHOOK] erro:', e.message);
     res.status(200).end('OK');
     return;
   }
 
-  // Responde ao Telegram depois de ler o body
   res.status(200).end('OK');
 
   const message = body.message || body.callback_query?.message;
