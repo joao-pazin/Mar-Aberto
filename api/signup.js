@@ -1,6 +1,6 @@
 import { addSubscriber, getSubscriberByEmail } from '../lib/sheets.js';
 
-export const config = { runtime: 'edge' };
+export const config = { runtime: 'nodejs' };
 
 export default async function handler(req) {
   // Só aceita POST
