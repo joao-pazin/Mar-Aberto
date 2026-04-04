@@ -27,6 +27,10 @@ export default async function handler(req, res) {
 
   res.status(200).end('OK');
 
+  // Processa em background após responder ao Telegram
+  setImmediate(async () => {
+  try {
+
   const message = body.message || body.callback_query?.message;
   const callbackQuery = body.callback_query;
 
@@ -123,7 +127,10 @@ export default async function handler(req, res) {
       await sendMessage(chatId, '❓ Comando não reconhecido. Use /ajuda para ver os comandos disponíveis.');
   }
 
-  return;
+  } catch (err) {
+    console.error('[WEBHOOK] Erro no processamento:', err.message);
+  }
+  }); // fim setImmediate
 }
 
 // ─── HANDLERS ───────────────────────────────────────────────────────────────────
