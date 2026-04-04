@@ -3,7 +3,7 @@ import { formatDayForecast, formatWeekSummary, sendMessage } from '../lib/telegr
 import { addSubscriber, removeSubscriber, getSubscriber, updateSubscriberBeaches } from '../lib/sheets.js';
 import { BEACHES } from '../lib/beaches.js';
 
-export const config = { runtime: 'nodejs' };
+export const config = { runtime: 'edge' };
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
