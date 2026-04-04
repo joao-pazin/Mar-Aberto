@@ -3,18 +3,24 @@ import { formatDayForecast, formatWeekSummary, sendMessage } from '../lib/telegr
 import { addSubscriber, removeSubscriber, getSubscriber, updateSubscriberBeaches } from '../lib/sheets.js';
 import { BEACHES } from '../lib/beaches.js';
 
-export const config = { runtime: 'edge' };
+export const config = { runtime: 'nodejs', maxDuration: 60 };
 
-export default async function handler(req) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    res.status(405).end('Method not allowed');
+    return;
   }
 
-  const body = await req.json();
+  // Responde imediatamente ao Telegram para evitar timeout
+  res.status(200).end('OK');
+
+  const body = req.body;
+  if (!body) return;
+
   const message = body.message || body.callback_query?.message;
   const callbackQuery = body.callback_query;
 
-  if (!message) return new Response('OK', { status: 200 });
+  if (!message) return;
 
   const chatId = message.chat.id;
   const text = message.text || '';
@@ -29,29 +35,29 @@ export default async function handler(req) {
     if (data.startsWith('toggle_')) {
       const beachId = data.replace('toggle_', '');
       await handleBeachToggle(chatId, beachId);
-      return new Response('OK', { status: 200 });
+      return;
     }
 
     // Confirmar seleção de praias
     if (data === 'confirm_beaches') {
       await handleConfirmBeaches(chatId, firstName);
-      return new Response('OK', { status: 200 });
+      return;
     }
 
     // Ver previsão de uma praia específica
     if (data.startsWith('forecast_')) {
       const beachId = data.replace('forecast_', '');
       await handleForecastRequest(chatId, beachId, 'day');
-      return new Response('OK', { status: 200 });
+      return;
     }
 
     if (data.startsWith('week_')) {
       const beachId = data.replace('week_', '');
       await handleForecastRequest(chatId, beachId, 'week');
-      return new Response('OK', { status: 200 });
+      return;
     }
 
-    return new Response('OK', { status: 200 });
+    return;
   }
 
   // ─── COMANDOS DE TEXTO ───────────────────────────────────────────────────────
@@ -107,7 +113,7 @@ export default async function handler(req) {
       await sendMessage(chatId, '❓ Comando não reconhecido. Use /ajuda para ver os comandos disponíveis.');
   }
 
-  return new Response('OK', { status: 200 });
+  return;
 }
 
 // ─── HANDLERS ───────────────────────────────────────────────────────────────────
