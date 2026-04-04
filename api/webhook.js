@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Lê o body manualmente (Node.js não faz parse automático)
+  // Lê o body ANTES de responder
   let body;
   try {
     const chunks = [];
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Responde imediatamente ao Telegram
+  // Responde ao Telegram depois de ler o body
   res.status(200).end('OK');
 
   const message = body.message || body.callback_query?.message;
