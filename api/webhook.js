@@ -3,7 +3,7 @@ import { formatDayForecast, formatWeekSummary, sendMessage, sendPhoto } from '..
 import { addSubscriber, removeSubscriber, getSubscriber, updateSubscriberBeaches } from '../lib/sheets.js';
 import { BEACHES } from '../lib/beaches.js';
 
-export const config = { runtime: 'edge' };
+export const config = { runtime: 'nodejs' };
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
