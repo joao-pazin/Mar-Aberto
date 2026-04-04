@@ -1,4 +1,4 @@
-import { fetchBeach, fetchAllBeaches } from '../lib/openmeteo.js';
+import { fetchBeach } from '../lib/openmeteo.js';
 import { formatDayForecast, formatWeekSummary, sendMessage } from '../lib/telegram.js';
 import { addSubscriber, removeSubscriber, getSubscriber, updateSubscriberBeaches } from '../lib/sheets.js';
 import { BEACHES } from '../lib/beaches.js';
@@ -15,151 +15,133 @@ export default async function handler(req, res) {
   try {
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
-    const raw = Buffer.concat(chunks).toString();
-    console.log('[WEBHOOK] raw:', raw.substring(0, 200));
-    body = JSON.parse(raw);
-    console.log('[WEBHOOK] message:', body?.message?.text, 'callback:', body?.callback_query?.data);
+    body = JSON.parse(Buffer.concat(chunks).toString());
   } catch (e) {
-    console.log('[WEBHOOK] erro:', e.message);
     res.status(200).end('OK');
     return;
   }
 
-  res.status(200).end('OK');
-
-  // Processa em background após responder ao Telegram
-  setImmediate(async () => {
-  try {
-
   const message = body.message || body.callback_query?.message;
   const callbackQuery = body.callback_query;
 
-  if (!message) return;
+  if (!message) {
+    res.status(200).end('OK');
+    return;
+  }
 
   const chatId = message.chat.id;
   const text = message.text || '';
   const firstName = message.chat.first_name || 'surfista';
 
-  // ─── CALLBACK QUERIES (botões inline) ───────────────────────────────────────
-  if (callbackQuery) {
-    const data = callbackQuery.data;
-    await answerCallbackQuery(callbackQuery.id);
+  try {
+    if (callbackQuery) {
+      const data = callbackQuery.data;
+      await answerCallbackQuery(callbackQuery.id);
 
-    // Toggle de praia selecionada
-    if (data.startsWith('toggle_')) {
-      const beachId = data.replace('toggle_', '');
-      await handleBeachToggle(chatId, beachId);
+      if (data.startsWith('toggle_')) {
+        await handleBeachToggle(chatId, data.replace('toggle_', ''));
+      } else if (data === 'confirm_beaches') {
+        await handleConfirmBeaches(chatId, firstName);
+      } else if (data.startsWith('day_')) {
+        await handleForecastRequest(chatId, data.replace('day_', ''), 'day');
+      } else if (data.startsWith('week_')) {
+        await handleForecastRequest(chatId, data.replace('week_', ''), 'week');
+      } else if (data.startsWith('forecast_')) {
+        await handleForecastRequest(chatId, data.replace('forecast_', ''), 'day');
+      }
+
+      res.status(200).end('OK');
       return;
     }
 
-    // Confirmar seleção de praias
-    if (data === 'confirm_beaches') {
-      await handleConfirmBeaches(chatId, firstName);
-      return;
-    }
+    const command = text.split(' ')[0].toLowerCase();
 
-    // Ver previsão de uma praia específica
-    if (data.startsWith('forecast_')) {
-      const beachId = data.replace('forecast_', '');
-      await handleForecastRequest(chatId, beachId, 'day');
-      return;
-    }
-
-    if (data.startsWith('week_')) {
-      const beachId = data.replace('week_', '');
-      await handleForecastRequest(chatId, beachId, 'week');
-      return;
-    }
-
-    return;
-  }
-
-  // ─── COMANDOS DE TEXTO ───────────────────────────────────────────────────────
-  const command = text.split(' ')[0].toLowerCase();
-
-  switch (command) {
-    case '/start':
-      const payload = text.split(' ')[1] || null;
-      await handleStart(chatId, firstName, payload);
-      break;
-
-    case '/praias':
-      await handleSelectBeaches(chatId);
-      break;
-
-    case '/previsao':
-      await handleMyBeachesForecast(chatId, 'day');
-      break;
-
-    case '/semana':
-      await handleMyBeachesForecast(chatId, 'week');
-      break;
-
-    case '/status':
-      await handleStatus(chatId);
-      break;
-
-    case '/comprovante':
-      await handleComprovante(chatId, firstName);
-      break;
-
-    case '/liberar': {
-      // Comando exclusivo do admin
-      const adminId = process.env.ADMIN_CHAT_ID;
-      if (String(chatId) !== String(adminId)) {
-        await sendMessage(chatId, '❌ Comando não autorizado.');
+    switch (command) {
+      case '/start': {
+        const payload = text.split(' ')[1] || null;
+        await handleStart(chatId, firstName, payload);
         break;
       }
-      const query = text.split(' ')[1];
-      await handleLiberar(chatId, query);
-      break;
+      case '/praias':
+        await handleSelectBeaches(chatId);
+        break;
+      case '/previsao':
+        await handleMyBeachesForecast(chatId, 'day');
+        break;
+      case '/semana':
+        await handleMyBeachesForecast(chatId, 'week');
+        break;
+      case '/status':
+        await handleStatus(chatId);
+        break;
+      case '/comprovante':
+        await handleComprovante(chatId, firstName);
+        break;
+      case '/liberar': {
+        const adminId = process.env.ADMIN_CHAT_ID;
+        if (String(chatId) !== String(adminId)) {
+          await sendMessage(chatId, '❌ Comando não autorizado.');
+          break;
+        }
+        await handleLiberar(chatId, text.split(' ')[1]);
+        break;
+      }
+      case '/parar':
+        await removeSubscriber(chatId);
+        await sendMessage(chatId, '😢 Você foi removido dos alertas. Use /start se quiser voltar!');
+        break;
+      case '/ajuda':
+        await handleHelp(chatId);
+        break;
+      default:
+        await sendMessage(chatId, '❓ Comando não reconhecido. Use /ajuda para ver os comandos disponíveis.');
     }
-
-    case '/parar':
-      await handleUnsubscribe(chatId);
-      break;
-
-    case '/ajuda':
-      await handleHelp(chatId);
-      break;
-
-    default:
-      await sendMessage(chatId, '❓ Comando não reconhecido. Use /ajuda para ver os comandos disponíveis.');
-  }
-
   } catch (err) {
-    console.error('[WEBHOOK] Erro no processamento:', err.message);
+    console.error('[WEBHOOK] erro:', err.message);
   }
-  }); // fim setImmediate
+
+  res.status(200).end('OK');
 }
 
-// ─── HANDLERS ───────────────────────────────────────────────────────────────────
+// ─── HANDLERS ────────────────────────────────────────────────────────────────
 
 async function handleStart(chatId, firstName, payload) {
-  // Se veio com código de vínculo da landing page (?start=CODIGO)
   if (payload && payload.length > 10) {
     try {
-      const email = atob(payload.replace(/-/g, '='));
-      const { getSubscriberByEmail, addSubscriber } = await import('../lib/sheets.js');
+      const email = Buffer.from(payload, 'base64').toString('utf8');
       const existing = await getSubscriberByEmail(email);
-
       if (existing && !existing.chatId) {
-        // Vincula o chatId ao cadastro existente
         await addSubscriber(chatId, existing.beaches, existing.firstName || firstName, email);
+        const beachNames = existing.beaches.map(id => {
+          const b = BEACHES.find(b => b.id === id);
+          return b ? `🏖️ ${b.name}` : id;
+        }).join('\n');
         await sendMessage(chatId,
-          `🌊 *Conta vinculada com sucesso, ${existing.firstName || firstName}!*\n\nVocê vai receber alertas para:\n${existing.beaches.map(id => `🏖️ ${id}`).join('\n')}\n\n⏰ Alertas às *06h* e *19h* todo dia.\n\n/praias — alterar praias\n/ajuda — ver comandos`,
+          `🌊 *Bem-vindo ao Mar Aberto, ${existing.firstName || firstName}!*\n\nSua praia monitorada:\n${beachNames}\n\n⏰ Alertas às *06h* e *19h* todo dia.\n\n/previsao — ver previsão agora\n/ajuda — ver comandos`,
           { parse_mode: 'Markdown' }
         );
         return;
       }
-    } catch (e) {
-      // Código inválido, segue fluxo normal
-    }
+    } catch (e) {}
   }
 
-  // Fluxo normal de /start
-  const text = `🌊 *Bem-vindo ao Mar Aberto, ${firstName}!*\n\nVou te enviar previsões diárias de ondas, vento, maré e tempo para as praias da Zona Sul e Zona Oeste do Rio.\n\n*Para começar, escolha sua praia:*`;
-  await sendMessage(chatId, text, { parse_mode: 'Markdown' });
+  const subscriber = await getSubscriber(chatId);
+  if (subscriber && subscriber.beaches && subscriber.beaches.length > 0) {
+    const beachNames = subscriber.beaches.map(id => {
+      const b = BEACHES.find(b => b.id === id);
+      return b ? `🏖️ ${b.name}` : id;
+    }).join('\n');
+    await sendMessage(chatId,
+      `🌊 *Bem-vindo de volta, ${firstName}!*\n\nSua praia monitorada:\n${beachNames}\n\n⏰ Alertas às *06h* e *19h* todo dia.\n\n/previsao — ver previsão agora\n/praias — alterar praia\n/ajuda — ver comandos`,
+      { parse_mode: 'Markdown' }
+    );
+    return;
+  }
+
+  await sendMessage(chatId,
+    `🌊 *Bem-vindo ao Mar Aberto, ${firstName}!*\n\nO mar chama. A gente avisa.\n\nEscolha sua praia:`,
+    { parse_mode: 'Markdown' }
+  );
   await handleSelectBeaches(chatId);
 }
 
@@ -172,25 +154,18 @@ async function handleSelectBeaches(chatId) {
   const buttons = BEACHES.map(beach => {
     const isSelected = selectedBeaches.includes(beach.id);
     const isLocked = !premium && !isSelected && selectedBeaches.length >= FREE_BEACH_LIMIT;
-
     let label;
     if (isSelected) label = `✅ ${beach.name}`;
     else if (isLocked) label = `🔒 ${beach.name}`;
     else label = `🏖️ ${beach.name}`;
-
     return { text: label, callback_data: `toggle_${beach.id}` };
   });
 
   const keyboard = [];
-  for (let i = 0; i < buttons.length; i += 2) {
-    keyboard.push(buttons.slice(i, i + 2));
-  }
+  for (let i = 0; i < buttons.length; i += 2) keyboard.push(buttons.slice(i, i + 2));
   keyboard.push([{ text: '✅ Confirmar seleção', callback_data: 'confirm_beaches' }]);
 
-  const subtitle = premium
-    ? '_(todas as praias desbloqueadas)_'
-    : `_Plano gratuito: 1 praia. 🔒 = Premium_`;
-
+  const subtitle = premium ? '_(todas as praias desbloqueadas)_' : '_Plano gratuito: 1 praia. 🔒 = Premium_';
   await sendMessage(chatId, `🏖️ *Selecione sua praia:*\n${subtitle}`, {
     parse_mode: 'Markdown',
     reply_markup: { inline_keyboard: keyboard }
@@ -203,18 +178,14 @@ async function handleBeachToggle(chatId, beachId) {
   let selectedBeaches = subscriber?.beaches || [];
   const isRemoving = selectedBeaches.includes(beachId);
 
-  // Se está tentando adicionar e já tem o limite e não é premium → bloqueia
   if (!isRemoving && !isPremium(subscriber) && selectedBeaches.length >= FREE_BEACH_LIMIT) {
-    const beach = (await import('../lib/beaches.js')).BEACHES.find(b => b.id === beachId);
+    const beach = BEACHES.find(b => b.id === beachId);
     await sendMessage(chatId, buildUpgradeMessage(beach?.name || beachId), { parse_mode: 'Markdown' });
     return;
   }
 
-  if (isRemoving) {
-    selectedBeaches = selectedBeaches.filter(b => b !== beachId);
-  } else {
-    selectedBeaches.push(beachId);
-  }
+  if (isRemoving) selectedBeaches = selectedBeaches.filter(b => b !== beachId);
+  else selectedBeaches.push(beachId);
 
   await updateSubscriberBeaches(chatId, selectedBeaches);
 }
@@ -228,16 +199,10 @@ async function handleConfirmBeaches(chatId, firstName) {
     return;
   }
 
-  // Garante que o subscriber está salvo na Sheet
   await addSubscriber(chatId, selectedBeaches, firstName);
-
-  const beachNames = selectedBeaches
-    .map(id => BEACHES.find(b => b.id === id)?.name)
-    .filter(Boolean)
-    .join(', ');
-
+  const beachNames = selectedBeaches.map(id => BEACHES.find(b => b.id === id)?.name).filter(Boolean).join(', ');
   await sendMessage(chatId,
-    `✅ *Perfeito!* Você receberá alertas diários às 7h para:\n\n🏖️ ${beachNames}\n\n*Comandos disponíveis:*\n/previsao — previsão de hoje\n/semana — previsão da semana\n/praias — alterar praias\n/parar — cancelar alertas`,
+    `✅ *Perfeito!* Sua praia monitorada: *${beachNames}*\n\n⏰ Alertas às *06h* e *19h* todo dia.\n\n/previsao — ver previsão agora`,
     { parse_mode: 'Markdown' }
   );
 }
@@ -251,15 +216,9 @@ async function handleMyBeachesForecast(chatId, type) {
     return;
   }
 
-  await sendMessage(chatId, '⏳ Buscando previsão, aguarde...');
-
-  // Botões para escolher qual praia ver
   const keyboard = selectedBeaches.map(beachId => {
     const beach = BEACHES.find(b => b.id === beachId);
-    return [{
-      text: `🌊 ${beach?.name}`,
-      callback_data: `${type}_${beachId}`
-    }];
+    return [{ text: `🌊 ${beach?.name}`, callback_data: `${type}_${beachId}` }];
   });
 
   await sendMessage(chatId, '📍 *Escolha a praia:*', {
@@ -279,47 +238,32 @@ async function handleForecastRequest(chatId, beachId, type) {
 
   try {
     const data = await fetchBeach(beach);
-
-    if (type === 'week') {
-      const msg = formatWeekSummary(beach, data);
-      await sendMessage(chatId, msg, { parse_mode: 'Markdown' });
-    } else {
-      // 'day' = hoje, 'tomorrow' = amanhã
-      const daysOffset = type === 'tomorrow' ? 1 : 0;
-      const msg = formatDayForecast(beach, data, daysOffset);
-      await sendMessage(chatId, msg, { parse_mode: 'Markdown' });
-    }
+    const daysOffset = type === 'tomorrow' ? 1 : 0;
+    const msg = type === 'week'
+      ? formatWeekSummary(beach, data)
+      : formatDayForecast(beach, data, daysOffset);
+    await sendMessage(chatId, msg, { parse_mode: 'Markdown' });
   } catch (err) {
     await sendMessage(chatId, `❌ Erro ao buscar dados: ${err.message}`);
   }
 }
 
 async function handleStatus(chatId) {
-  const { getSubscriber } = await import('../lib/sheets.js');
   const { buildStatusMessage } = await import('../lib/billing.js');
   const subscriber = await getSubscriber(chatId);
-
   if (!subscriber) {
     await sendMessage(chatId, '⚠️ Você ainda não está cadastrado. Use /start.');
     return;
   }
-
   await sendMessage(chatId, buildStatusMessage(subscriber), { parse_mode: 'Markdown' });
 }
 
 async function handleComprovante(chatId, firstName) {
   const ADMIN_ID = process.env.ADMIN_CHAT_ID;
-
-  // Avisa o usuário
-  await sendMessage(chatId,
-    `✅ *Comprovante recebido!*\n\nVamos verificar seu pagamento e liberar seu acesso em breve. Normalmente leva até algumas horas.\n\nDúvidas? Entre em contato com o suporte.`,
-    { parse_mode: 'Markdown' }
-  );
-
-  // Notifica o admin
+  await sendMessage(chatId, `✅ *Comprovante recebido!*\n\nVamos verificar e liberar em breve.`, { parse_mode: 'Markdown' });
   if (ADMIN_ID) {
     await sendMessage(ADMIN_ID,
-      `💰 *Novo comprovante recebido!*\n\n👤 ${firstName}\n🆔 chatId: \`${chatId}\`\n\nPara liberar o acesso:\n/liberar ${chatId}`,
+      `💰 *Novo comprovante!*\n👤 ${firstName}\n🆔 ${chatId}\n\n/liberar ${chatId}`,
       { parse_mode: 'Markdown' }
     );
   }
@@ -330,41 +274,33 @@ async function handleLiberar(adminChatId, query) {
     await sendMessage(adminChatId, '⚠️ Use: /liberar <chatId ou email>');
     return;
   }
-
   const { findSubscriberByEmailOrId, grantAccess } = await import('../lib/sheets.js');
   const subscriber = await findSubscriberByEmailOrId(query);
-
-  if (!subscriber || !subscriber.chatId) {
-    await sendMessage(adminChatId, `❌ Subscriber não encontrado: ${query}`);
+  if (!subscriber?.chatId) {
+    await sendMessage(adminChatId, `❌ Não encontrado: ${query}`);
     return;
   }
-
   await grantAccess(subscriber.chatId);
-
-  // Notifica o admin
-  await sendMessage(adminChatId,
-    `✅ Acesso liberado por 30 dias para:\n👤 ${subscriber.firstName}\n📧 ${subscriber.email}\n🆔 ${subscriber.chatId}`,
-    { parse_mode: 'Markdown' }
-  );
-
-  // Notifica o usuário
-  await sendMessage(subscriber.chatId,
-    `🎉 *Pagamento confirmado, ${subscriber.firstName}!*\n\nSeu acesso foi reativado por 30 dias. Os alertas voltam a partir do próximo envio.\n\n🌊 Boas ondas!`,
-    { parse_mode: 'Markdown' }
-  );
+  await sendMessage(adminChatId, `✅ Acesso liberado para ${subscriber.firstName} (${subscriber.chatId})`);
+  await sendMessage(subscriber.chatId, `🎉 *Pagamento confirmado!*\n\nSeu acesso Premium foi ativado por 30 dias. 🌊`, { parse_mode: 'Markdown' });
 }
 
 async function handleHelp(chatId) {
   await sendMessage(chatId,
-    `🌊 *Ondas RJ — Comandos*\n\n/start — iniciar ou reiniciar o bot\n/praias — escolher praias monitoradas\n/previsao — ver previsão de hoje\n/semana — ver previsão da semana\n/status — ver status da sua assinatura\n/comprovante — enviar comprovante de pagamento\n/parar — cancelar alertas\n/ajuda — mostrar esta mensagem\n\n⏰ Alertas automáticos às *06h* e *19h*`,
+    `🌊 *Mar Aberto — Comandos*\n\n/previsao — previsão de hoje\n/semana — previsão da semana\n/praias — alterar praia monitorada\n/status — ver plano\n/comprovante — enviar comprovante PIX\n/parar — cancelar alertas\n/ajuda — esta mensagem\n\n⏰ Alertas automáticos às *06h* e *19h*`,
     { parse_mode: 'Markdown' }
   );
 }
 
-async function answerCallbackQuery(callbackQueryId) {
+async function getSubscriberByEmail(email) {
+  const { getSubscriberByEmail: fn } = await import('../lib/sheets.js');
+  return fn(email);
+}
+
+async function answerCallbackQuery(id) {
   await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ callback_query_id: callbackQueryId })
+    body: JSON.stringify({ callback_query_id: id })
   });
 }
