@@ -17,6 +17,9 @@
       "maxDuration": 60
     },
     "api/webhook.js": {
+      "maxDuration": 60
+    },
+    "api/sheets-proxy.js": {
       "maxDuration": 30
     }
   }
