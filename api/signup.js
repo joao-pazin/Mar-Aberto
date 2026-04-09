@@ -29,8 +29,13 @@ export default async function handler(req) {
   }
 
   const VALID_BEACH_IDS = [
+    // Rio de Janeiro
     'copacabana', 'ipanema', 'leblon', 'sao_conrado',
-    'barra', 'recreio', 'macumba', 'prainha', 'grumari'
+    'barra', 'recreio', 'macumba', 'prainha', 'grumari',
+    // Florianópolis
+    'joaquina', 'praia_mole', 'barra_da_lagoa', 'campeche',
+    // Litoral Norte SP
+    'itamambuca', 'prumirim', 'maresias',
   ];
 
   const validBeaches = beaches.filter(b => VALID_BEACH_IDS.includes(b));
