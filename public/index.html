@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mar Aberto — O mar chama. A gente avisa.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    /* ── RESET & TOKENS ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080c10;
+      --surface:   #0d1520;
+      --surface2:  #111d2e;
+      --border:    rgba(255,255,255,0.07);
+      --accent:    #00d4aa;
+      --accent2:   #0099ff;
+      --text:      #e8f0f7;
+      --muted:     #6b8499;
+      --danger:    #ff4d6d;
+      --good:      #00d4aa;
+      --ok:        #f0b429;
+      --bad:       #ff6b35;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ────────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 2.5rem;
+      background: rgba(8,12,16,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem;
+      letter-spacing: 0.05em;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 0.9rem; font-weight: 400; letter-spacing: 0.02em;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .btn-nav {
+      background: var(--accent); color: #000 !important;
+      padding: 0.5rem 1.2rem; border-radius: 6px;
+      font-weight: 500 !important;
+      transition: opacity 0.2s !important;
+    }
+    .btn-nav:hover { opacity: 0.85; }
+    .btn-nav-ghost {
+      background: transparent !important; color: #e8f0f7 !important;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .btn-nav-ghost:hover { border-color: rgba(255,255,255,0.4); opacity: 1; }
+
+    /* ── HERO ───────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 8rem 2rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Ondas animadas no fundo */
+    .waves-bg {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 220px; overflow: hidden;
+    }
+
+    .wave {
+      position: absolute; bottom: 0; left: -100%;
+      width: 300%; height: 100%;
+      background: radial-gradient(ellipse at 50% 100%, rgba(0,212,170,0.08) 0%, transparent 70%);
+      border-radius: 50% 50% 0 0;
+      animation: waveAnim 8s ease-in-out infinite;
+    }
+    .wave:nth-child(2) {
+      animation-delay: -3s; animation-duration: 11s;
+      background: radial-gradient(ellipse at 50% 100%, rgba(0,153,255,0.06) 0%, transparent 70%);
+    }
+    .wave:nth-child(3) {
+      animation-delay: -6s; animation-duration: 14s;
+      background: radial-gradient(ellipse at 50% 100%, rgba(0,212,170,0.04) 0%, transparent 70%);
+    }
+
+    @keyframes waveAnim {
+      0%, 100% { transform: translateX(0) scaleY(1); }
+      50% { transform: translateX(8%) scaleY(1.1); }
+    }
+
+    /* Glow de fundo */
+    .hero::before {
+      content: '';
+      position: absolute; top: 20%; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(0,153,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3);
+      color: var(--accent); padding: 0.35rem 1rem; border-radius: 999px;
+      font-size: 0.8rem; font-weight: 500; letter-spacing: 0.08em;
+      text-transform: uppercase; margin-bottom: 2rem;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hero-tag::before { content: '●'; font-size: 0.5rem; animation: pulse 2s infinite; }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .hero h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(4rem, 12vw, 9rem);
+      line-height: 0.9;
+      letter-spacing: 0.02em;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: transparent;
+      -webkit-text-stroke: 2px var(--accent);
+    }
+
+    .hero p {
+      max-width: 500px; font-size: 1.15rem;
+      color: var(--muted); margin-bottom: 3rem;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .hero-cta {
+      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+
+    .btn-primary {
+      background: var(--accent); color: #000;
+      padding: 0.9rem 2rem; border-radius: 8px;
+      font-weight: 500; font-size: 1rem;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-primary:hover { transform: translateY(-2px); opacity: 0.9; }
+
+    .btn-ghost {
+      background: transparent; color: var(--text);
+      padding: 0.9rem 2rem; border-radius: 8px;
+      font-weight: 400; font-size: 1rem;
+      text-decoration: none; border: 1px solid var(--border); cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-ghost:hover { border-color: var(--accent); background: rgba(0,212,170,0.05); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── HERO PILLARS ───────────────────────────────────────── */
+    .hero-pillars {
+      display: flex; align-items: stretch; gap: 0;
+      margin-top: 3.5rem; margin-bottom: 1rem;
+      background: rgba(13,21,32,0.8);
+      border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      backdrop-filter: blur(8px);
+      max-width: 680px; width: 100%;
+      animation: fadeUp 0.6s 0.4s ease both;
+      position: relative; z-index: 1;
+    }
+
+    .pillar {
+      flex: 1; display: flex; align-items: flex-start; gap: 1rem;
+      padding: 1.8rem 2rem; text-align: left;
+    }
+
+    .pillar-icon {
+      font-size: 1.8rem; flex-shrink: 0; margin-top: 0.1rem;
+    }
+
+    .pillar-content h3 {
+      font-size: 1rem; font-weight: 500; margin-bottom: 0.4rem;
+      color: var(--text);
+    }
+
+    .pillar-content p {
+      font-size: 0.85rem; color: var(--muted);
+      margin-bottom: 0; max-width: none;
+      animation: none;
+    }
+
+    .pillar-divider {
+      width: 1px; background: var(--border); flex-shrink: 0;
+      margin: 1.2rem 0;
+    }
+
+    @media (max-width: 600px) {
+      .hero-pillars { flex-direction: column; }
+      .pillar-divider { width: auto; height: 1px; margin: 0 1.5rem; }
+      .pillar { padding: 1.4rem 1.5rem; }
+    }
+
+    /* ── DASHBOARD PREVIEW ──────────────────────────────────── */
+    .dash-preview { background: var(--surface); }
+
+    .dash-window {
+      margin-top: 4rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+    }
+
+    .dash-titlebar {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.9rem 1.2rem;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dash-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .dash-url {
+      flex: 1; margin-left: 0.8rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; padding: 0.3rem 0.8rem;
+      font-size: 0.75rem; color: var(--muted); font-family: monospace;
+    }
+
+    .dash-inner {
+      display: grid; grid-template-columns: 220px 1fr;
+      min-height: 420px;
+    }
+
+    @media (max-width: 768px) {
+      .dash-inner { grid-template-columns: 1fr; }
+      .dash-sidebar { display: none; }
+    }
+
+    .dash-sidebar {
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+      display: flex; flex-direction: column; gap: 0.4rem;
+    }
+
+    .dash-sidebar-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem; color: var(--accent);
+      padding: 0 0.5rem; margin-bottom: 1rem;
+    }
+
+    .dash-nav-item {
+      padding: 0.6rem 0.8rem; border-radius: 8px;
+      font-size: 0.82rem; color: var(--muted);
+      display: flex; align-items: center; gap: 0.6rem;
+      cursor: default;
+    }
+    .dash-nav-item.active {
+      background: rgba(0,212,170,0.1);
+      color: var(--accent);
+    }
+
+    .dash-beach-list { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.3rem; }
+
+    .dash-beach-item {
+      padding: 0.5rem 0.8rem; border-radius: 6px;
+      font-size: 0.8rem; color: var(--muted);
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: default;
+    }
+    .dash-beach-item.selected { color: var(--text); background: var(--surface2); }
+    .dash-beach-item.locked { opacity: 0.4; }
+    .dash-beach-item .lock { font-size: 0.65rem; }
+
+    .dash-main { padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .dash-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.5rem;
+    }
+
+    .dash-beach-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem; line-height: 1;
+    }
+
+    .dash-rating-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3);
+      color: var(--accent); padding: 0.4rem 0.9rem; border-radius: 999px;
+      font-size: 0.82rem; font-weight: 500;
+    }
+
+    .dash-kpis {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem;
+    }
+
+    @media (max-width: 600px) { .dash-kpis { grid-template-columns: repeat(2,1fr); } }
+
+    .dash-kpi {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.9rem 1rem;
+    }
+
+    .dash-kpi-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.3rem; }
+    .dash-kpi-val { font-size: 1.3rem; font-weight: 500; }
+    .dash-kpi-sub { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
+
+    /* Gráfico de barras animado */
+    .dash-chart-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1rem 1.2rem;
+    }
+
+    .dash-chart-title {
+      font-size: 0.75rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.07em; margin-bottom: 1rem;
+    }
+
+    .dash-chart {
+      display: flex; align-items: flex-end; gap: 4px;
+      height: 100px;
+      padding-bottom: 0;
+    }
+
+    .dash-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+
+    .dash-bar {
+      width: 100%; border-radius: 3px 3px 0 0;
+      transition: height 0s;
+      animation: barGrow 1s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    @keyframes barGrow {
+      from { transform: scaleY(0); opacity: 0; }
+      to   { transform: scaleY(1); opacity: 1; }
+    }
+
+    .dash-bar-label { font-size: 0.6rem; color: var(--muted); flex-shrink: 0; }
+
+    .dash-bar-now { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ── STATS STRIP ────────────────────────────────────────── */
+    .stats {
+      display: flex; justify-content: center; gap: 0; flex-wrap: wrap;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .stat {
+      padding: 2rem 3rem; text-align: center;
+      border-right: 1px solid var(--border);
+      flex: 1; min-width: 150px;
+    }
+    .stat:last-child { border-right: none; }
+
+    .stat-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.8rem; color: var(--accent);
+      line-height: 1;
+    }
+
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; letter-spacing: 0.05em; text-transform: uppercase; }
+
+    /* ── SEÇÕES GENÉRICAS ───────────────────────────────────── */
+    section { padding: 6rem 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    .section-tag {
+      font-size: 0.75rem; font-weight: 500; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      line-height: 1; margin-bottom: 1rem;
+    }
+
+    .section-sub { color: var(--muted); max-width: 500px; font-size: 1.05rem; }
+
+    /* ── COMO FUNCIONA ──────────────────────────────────────── */
+    .how { background: var(--surface); }
+
+    .steps {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2px; margin-top: 4rem;
+      background: var(--border); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+
+    .step {
+      background: var(--surface2); padding: 2.5rem 2rem;
+      position: relative;
+    }
+
+    .step-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 5rem; line-height: 1;
+      color: rgba(0,212,170,0.08);
+      position: absolute; top: 1rem; right: 1.5rem;
+    }
+
+    .step-icon { font-size: 2rem; margin-bottom: 1.2rem; }
+    .step h3 { font-size: 1.1rem; font-weight: 500; margin-bottom: 0.5rem; }
+    .step p { font-size: 0.9rem; color: var(--muted); }
+
+    /* ── PRAIAS ─────────────────────────────────────────────── */
+    .beaches-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem; margin-top: 3rem;
+    }
+
+    .beach-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.2rem 1.5rem;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .beach-card:hover { border-color: rgba(0,212,170,0.4); background: var(--surface2); }
+    .beach-card.selected { border-color: var(--accent); background: rgba(0,212,170,0.05); }
+
+    .beach-info h4 { font-size: 0.95rem; font-weight: 500; }
+    .beach-info span { font-size: 0.75rem; color: var(--muted); }
+
+    .beach-rating {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .rating-good { background: rgba(0,212,170,0.15); }
+    .rating-ok   { background: rgba(240,180,41,0.15); }
+    .rating-bad  { background: rgba(255,107,53,0.15); }
+
+    /* ── CADASTRO ───────────────────────────────────────────── */
+    #cadastro { background: var(--surface); }
+
+    .signup-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 4rem; align-items: start; margin-top: 4rem;
+    }
+
+    @media (max-width: 768px) {
+      .signup-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    }
+
+    .form-group { margin-bottom: 1.5rem; }
+
+    label {
+      display: block; font-size: 0.8rem; font-weight: 500;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.5rem;
+    }
+
+    input, select {
+      width: 100%; background: var(--bg);
+      border: 1px solid var(--border); color: var(--text);
+      padding: 0.85rem 1rem; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+
+    .form-beaches {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .check-beach {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.6rem 0.8rem; border-radius: 6px;
+      border: 1px solid var(--border); cursor: pointer;
+      font-size: 0.85rem; transition: all 0.15s;
+      user-select: none;
+    }
+    .check-beach:hover { border-color: rgba(0,212,170,0.4); }
+    .check-beach input[type="checkbox"] { display: none; }
+    .check-beach.checked { border-color: var(--accent); background: rgba(0,212,170,0.08); color: var(--accent); }
+
+    .check-box {
+      width: 16px; height: 16px; border-radius: 4px;
+      border: 1.5px solid var(--muted); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.6rem; transition: all 0.15s;
+    }
+    .check-beach.checked .check-box { background: var(--accent); border-color: var(--accent); color: #000; }
+
+    .btn-submit {
+      width: 100%; padding: 1rem;
+      background: var(--accent); color: #000;
+      border: none; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem; font-weight: 500; cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      margin-top: 0.5rem;
+    }
+    .btn-submit:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Preview da notificação */
+    .preview-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.5rem; position: sticky; top: 100px;
+    }
+
+    .preview-header {
+      display: flex; align-items: center; gap: 0.8rem;
+      margin-bottom: 1.5rem; padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tg-icon {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #00d4aa, #0099ff);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; flex-shrink: 0;
+    }
+
+    .preview-header-text h4 { font-size: 0.9rem; font-weight: 500; }
+    .preview-header-text span { font-size: 0.75rem; color: var(--muted); }
+
+    .preview-msg {
+      background: var(--surface); border-radius: 12px; padding: 1rem;
+      font-size: 0.85rem; line-height: 1.7;
+    }
+
+    .preview-msg .msg-line { margin-bottom: 0.2rem; }
+    .preview-msg .msg-section { margin-top: 0.8rem; color: var(--muted); font-size: 0.8rem; }
+    .preview-msg .msg-value { color: var(--text); font-weight: 400; }
+    .preview-msg .badge {
+      display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 500; background: rgba(0,212,170,0.15); color: var(--accent);
+    }
+
+    .preview-label {
+      text-align: center; font-size: 0.75rem; color: var(--muted);
+      margin-top: 1rem; letter-spacing: 0.04em;
+    }
+
+    /* ── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 2rem; text-align: center;
+      color: var(--muted); font-size: 0.85rem;
+    }
+
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem; margin-bottom: 0.5rem;
+    }
+    .footer-logo span { color: var(--accent); }
+
+    /* ── SUCCESS STATE ──────────────────────────────────────── */
+    .success-box {
+      display: none; text-align: center; padding: 3rem;
+      background: rgba(0,212,170,0.05); border: 1px solid rgba(0,212,170,0.2);
+      border-radius: 16px;
+    }
+    .success-box.visible { display: block; }
+    .success-box h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .success-box p { color: var(--muted); margin-bottom: 1.5rem; }
+
+    /* ── UTILITÁRIOS ────────────────────────────────────────── */
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .mt-3 { margin-top: 1.5rem; }
+
+    .divider {
+      height: 1px; background: var(--border); margin: 2rem 0;
+    }
+
+    /* Mobile nav */
+    @media (max-width: 600px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { gap: 1rem; }
+      .nav-links a:not(.btn-nav) { display: none; }
+      .hero h1 { font-size: clamp(3.5rem, 18vw, 7rem); }
+      .stat { padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────────────── -->
+<nav>
+  <a class="nav-logo" href="#"><span>〜</span> MAR ABERTO</a>
+  <div class="nav-links">
+    <a href="#como-funciona">Como funciona</a>
+    <a href="#praias">Praias</a>
+    <a href="#cadastro" class="btn-nav">Quero receber</a>
+    <a href="/dashboard" class="btn-nav btn-nav-ghost">Acessar gráficos e previsões</a>
+  </div>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-tag">1 praia grátis · Todas as praias por R$7,90/mês</div>
+  <h1>O MAR CHAMA.<br>A GENTE <em>AVISA.</em></h1>
+  <p>Previsão de ondas, vento e tempo para as praias do Rio de Janeiro, Florianópolis e Litoral Norte de SP. No seu Telegram todo dia — e no dashboard quando quiser consultar.</p>
+  <div class="hero-cta">
+    <a href="#cadastro" class="btn-primary">
+      ✦ Começar agora — grátis
+    </a>
+    <a href="#como-funciona" class="btn-ghost">
+      Como funciona
+    </a>
+  </div>
+
+  <!-- Dois pilares do produto -->
+  <div class="hero-pillars">
+    <div class="pillar">
+      <div class="pillar-icon">💬</div>
+      <div class="pillar-content">
+        <h3>Alerta no Telegram</h3>
+        <p>Previsão completa às 6h e às 19h, direto no app que você já usa. Sem instalar nada.</p>
+      </div>
+    </div>
+    <div class="pillar-divider"></div>
+    <div class="pillar">
+      <div class="pillar-icon">📊</div>
+      <div class="pillar-content">
+        <h3>Dashboard de previsão</h3>
+        <p>Gráficos hora a hora de ondas, vento e swell. Acesse quando quiser pelo navegador.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="waves-bg">
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+  </div>
+</section>
+
+<!-- ── STATS ─────────────────────────────────────────────────── -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num">1</div>
+    <div class="stat-label">Praia no plano grátis</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">17</div>
+    <div class="stat-label">Praias no Premium</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">2×</div>
+    <div class="stat-label">Alertas por dia</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">R$7,90</div>
+    <div class="stat-label">Por mês (Premium)</div>
+  </div>
+</div>
+
+<!-- ── COMO FUNCIONA ─────────────────────────────────────────── -->
+<section class="how" id="como-funciona">
+  <div class="container">
+    <div class="section-tag">// Como funciona</div>
+    <h2 class="section-title">Simples assim.</h2>
+    <p class="section-sub">Sem app pra instalar. Alertas no Telegram e gráficos no dashboard, tudo junto.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-icon">📱</div>
+        <h3>Baixe o Telegram</h3>
+        <p>O Telegram é gratuito e está disponível para Android e iPhone. Você vai precisar dele para receber os alertas.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-icon">📋</div>
+        <h3>Cadastre-se</h3>
+        <p>Informe seu nome, e-mail e escolha a praia que você frequenta.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-icon">🌅</div>
+        <h3>Alerta diário</h3>
+        <p>Às 6h, previsão completa do dia. Às 19h, amanhã + resumo da semana.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-icon">📊</div>
+        <h3>Dashboard</h3>
+        <p>Consulte gráficos hora a hora de ondas, vento e swell. Acesso liberado após o cadastro.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── DASHBOARD PREVIEW ───────────────────────────────────────── -->
+<section class="dash-preview">
+  <div class="container">
+    <div class="section-tag">// Dashboard</div>
+    <h2 class="section-title">Tudo num gráfico.</h2>
+    <p class="section-sub">Além do alerta no Telegram, você pode consultar a previsão hora a hora direto pelo navegador.</p>
+
+    <div class="dash-window">
+      <!-- Barra de título do browser -->
+      <div class="dash-titlebar">
+        <div class="dash-dot" style="background:#ff5f57"></div>
+        <div class="dash-dot" style="background:#febc2e"></div>
+        <div class="dash-dot" style="background:#28c840"></div>
+        <div class="dash-url">mar-aberto.vercel.app/dashboard</div>
+      </div>
+
+      <div class="dash-inner">
+        <!-- Sidebar -->
+        <div class="dash-sidebar">
+          <div class="dash-sidebar-logo">〜 Mar Aberto</div>
+          <div class="dash-nav-item active">📊 Previsão</div>
+          <div class="dash-nav-item">⚙️ Configurações</div>
+          <div class="dash-beach-list">
+            <div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.8rem 0.2rem">Suas praias</div>
+            <div class="dash-beach-item selected">Ipanema <span style="color:var(--accent);font-size:0.7rem">✅ Bom</span></div>
+            <div class="dash-beach-item locked">Leblon <span class="lock">🔒</span></div>
+            <div class="dash-beach-item locked">Barra <span class="lock">🔒</span></div>
+            <div class="dash-beach-item locked">Recreio <span class="lock">🔒</span></div>
+          </div>
+        </div>
+
+        <!-- Conteúdo principal -->
+        <div class="dash-main">
+          <div class="dash-header-row">
+            <div>
+              <div class="dash-beach-name">Ipanema</div>
+              <div style="font-size:0.78rem;color:var(--muted);margin-top:0.2rem">Hoje · Zona Sul, Rio de Janeiro</div>
+            </div>
+            <div class="dash-rating-badge">✅ Bom — 8/12 pts</div>
+          </div>
+          <p style="font-size:0.82rem;color:var(--muted);font-style:italic;margin-top:-0.5rem">
+            Ondas de tamanho ideal (1,4m), período de 12s garante ondas organizadas, swell SSE chegando direto na praia, vento moderado (14 km/h).
+          </p>
+
+          <!-- KPIs -->
+          <div class="dash-kpis">
+            <div class="dash-kpi">
+              <div class="dash-kpi-label">Onda</div>
+              <div class="dash-kpi-val">1,4 m</div>
+              <div class="dash-kpi-sub">Período 12s</div>
+            </div>
+            <div class="dash-kpi">
+              <div class="dash-kpi-label">Vento</div>
+              <div class="dash-kpi-val">14 km/h</div>
+              <div class="dash-kpi-sub">Offshore ↗</div>
+            </div>
+            <div class="dash-kpi">
+              <div class="dash-kpi-label">Swell</div>
+              <div class="dash-kpi-val">SSE</div>
+              <div class="dash-kpi-sub">Direto p/ praia</div>
+            </div>
+            <div class="dash-kpi">
+              <div class="dash-kpi-label">Chuva</div>
+              <div class="dash-kpi-val">0 mm</div>
+              <div class="dash-kpi-sub">Céu limpo</div>
+            </div>
+          </div>
+
+          <!-- Gráfico de ondas hora a hora -->
+          <div class="dash-chart-wrap">
+            <div class="dash-chart-title">Altura da onda — hora a hora (m)</div>
+            <div class="dash-chart" id="dash-chart-bars"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="text-align:center;margin-top:1.2rem;font-size:0.78rem;color:var(--muted)">
+      ✦ Dados ilustrativos — o dashboard exibe previsões reais da Open-Meteo
+    </p>
+  </div>
+</section>
+
+<!-- ── PRAIAS ─────────────────────────────────────────────────── -->
+<section id="praias">
+  <div class="container">
+    <div class="section-tag">// Praias cobertas</div>
+    <h2 class="section-title">17 praias em<br><em style="color:var(--accent);font-style:normal">3 destinos.</em></h2>
+    <p class="section-sub">Rio de Janeiro, Florianópolis e Litoral Norte de SP — previsão individual para cada praia.</p>
+
+    <!-- RIO DE JANEIRO -->
+    <div style="margin-top:2rem">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+        <span style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);padding:0.3rem 0.75rem;border-radius:20px">Rio de Janeiro</span>
+        <span style="font-size:0.75rem;color:var(--muted)">9 praias</span>
+      </div>
+      <div class="beaches-grid">
+        <div class="beach-card"><div class="beach-info"><h4>Copacabana</h4><span>Zona Sul</span></div><div class="beach-rating rating-ok">😐</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Ipanema</h4><span>Zona Sul</span></div><div class="beach-rating rating-good">🔥</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Leblon</h4><span>Zona Sul</span></div><div class="beach-rating rating-good">✅</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>São Conrado</h4><span>Zona Sul</span></div><div class="beach-rating rating-ok">😐</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Barra da Tijuca</h4><span>Zona Oeste</span></div><div class="beach-rating rating-good">✅</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Recreio</h4><span>Zona Oeste</span></div><div class="beach-rating rating-good">🔥</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Macumba</h4><span>Zona Oeste</span></div><div class="beach-rating rating-good">✅</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Prainha</h4><span>Zona Oeste</span></div><div class="beach-rating rating-good">🔥</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Grumari</h4><span>Zona Oeste</span></div><div class="beach-rating rating-bad">😞</div></div>
+      </div>
+    </div>
+
+    <!-- FLORIANÓPOLIS -->
+    <div style="margin-top:2.5rem">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+        <span style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);padding:0.3rem 0.75rem;border-radius:20px">Florianópolis</span>
+        <span style="font-size:0.75rem;color:var(--muted)">4 praias</span>
+      </div>
+      <div class="beaches-grid">
+        <div class="beach-card"><div class="beach-info"><h4>Joaquina</h4><span>Leste</span></div><div class="beach-rating rating-good">🔥</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Praia Mole</h4><span>Leste</span></div><div class="beach-rating rating-good">✅</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Barra da Lagoa</h4><span>Leste</span></div><div class="beach-rating rating-ok">😐</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Campeche</h4><span>Sul</span></div><div class="beach-rating rating-good">✅</div></div>
+      </div>
+    </div>
+
+    <!-- LITORAL NORTE SP -->
+    <div style="margin-top:2.5rem">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+        <span style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);padding:0.3rem 0.75rem;border-radius:20px">Litoral Norte SP</span>
+        <span style="font-size:0.75rem;color:var(--muted)">3 praias · Ubatuba e Maresias</span>
+      </div>
+      <div class="beaches-grid">
+        <div class="beach-card"><div class="beach-info"><h4>Itamambuca</h4><span>Ubatuba</span></div><div class="beach-rating rating-good">🔥</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Prumirim</h4><span>Ubatuba</span></div><div class="beach-rating rating-good">✅</div></div>
+        <div class="beach-card"><div class="beach-info"><h4>Maresias</h4><span>São Sebastião</span></div><div class="beach-rating rating-good">🔥</div></div>
+      </div>
+    </div>
+
+    <p style="margin-top:1.5rem;font-size:0.8rem;color:var(--muted)">
+      ✦ Ratings ilustrativos — os dados reais são atualizados a cada alerta.
+    </p>
+  </div>
+</section>
+
+<!-- ── CADASTRO ───────────────────────────────────────────────── -->
+<section id="cadastro">
+  <div class="container">
+    <div class="section-tag">// Cadastro</div>
+    <h2 class="section-title">Grátis pra começar.</h2>
+    <p class="section-sub">Escolha 1 praia agora. Quer todas as 17? R$7,90/mês.</p>
+
+    <div class="signup-grid">
+      <!-- FORMULÁRIO -->
+      <div>
+        <div id="form-area">
+          <div class="form-group mt-3">
+            <label>Seu nome</label>
+            <input type="text" id="inp-name" placeholder="Ex: João Pedro" />
+          </div>
+          <div class="form-group">
+            <label>E-mail</label>
+            <input type="email" id="inp-email" placeholder="joao@email.com" />
+          </div>
+
+          <div class="form-group">
+            <label>Sua praia <span style="color:var(--muted);font-weight:300;text-transform:none">(escolha 1 — grátis)</span></label>
+
+            <p style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin:0.75rem 0 0.4rem">Rio de Janeiro</p>
+            <div class="form-beaches" id="beach-checkboxes-rj"></div>
+
+            <p style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin:1rem 0 0.4rem">Florianópolis</p>
+            <div class="form-beaches" id="beach-checkboxes-floripa"></div>
+
+            <p style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin:1rem 0 0.4rem">Litoral Norte SP</p>
+            <div class="form-beaches" id="beach-checkboxes-sp"></div>
+
+            <p style="font-size:0.78rem;color:var(--muted);margin-top:0.6rem">🔒 Quer todas as 17 praias? Assine Premium por R$5/mês após o cadastro.</p>
+          </div>
+
+          <button class="btn-submit" id="btn-cadastrar" onclick="handleSignup()">
+            Criar conta grátis →
+          </button>
+        </div>
+
+        <div class="success-box" id="success-box">
+          <div style="font-size:3rem;margin-bottom:1rem">🌊</div>
+          <h3>Tudo certo, <span id="success-name"></span>!</h3>
+          <p>Agora é só abrir o bot no Telegram e dar Start. Os alertas chegam automaticamente.</p>
+          <a href="https://t.me/surfalertrj_bot" class="btn-primary" target="_blank">
+            Abrir bot no Telegram ↗
+          </a>
+        </div>
+      </div>
+
+      <!-- PREVIEW -->
+      <div>
+        <div class="preview-card">
+          <div class="preview-header">
+            <div class="tg-icon">〜</div>
+            <div class="preview-header-text">
+              <h4>Mar Aberto</h4>
+              <span>bot · agora</span>
+            </div>
+          </div>
+          <div class="preview-msg">
+            <div class="msg-line">🌅 <strong>Bom dia!</strong></div>
+            <div class="msg-line" style="color:var(--muted);font-size:0.8rem">📅 Previsão de hoje — quinta, 3 de abril</div>
+            <div class="msg-line" style="color:var(--muted)">━━━━━━━━━━━━━</div>
+            <br>
+            <div class="msg-line">🔥 <strong>Ipanema</strong> <span class="badge">Excelente</span></div>
+            <div class="msg-line" style="color:var(--muted);font-size:0.8rem">📍 Zona Sul</div>
+            <br>
+            <div class="msg-section">🌊 Ondas</div>
+            <div class="msg-line msg-value">  Altura: 1.4m <span style="color:var(--muted)">(pico 2.1m)</span></div>
+            <div class="msg-line msg-value">  Período: 13s</div>
+            <div class="msg-line msg-value">  Direção: S</div>
+            <br>
+            <div class="msg-section">💨 Vento</div>
+            <div class="msg-line msg-value">  Média: 14 km/h</div>
+            <div class="msg-line msg-value">  Rajadas: até 22 km/h</div>
+            <div class="msg-line msg-value">  Direção: NE</div>
+            <br>
+            <div class="msg-section">☁️ Tempo</div>
+            <div class="msg-line msg-value">  Chuva: 0 mm · Nuvens: 20%</div>
+            <div class="msg-line msg-value">  Temp. ar: 29°C · Água: 26°C</div>
+          </div>
+          <div class="preview-label">↑ Exemplo real de alerta</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-logo"><span>〜</span> MAR ABERTO</div>
+  <p>O mar chama. A gente avisa.</p>
+  <p class="mt-2">
+    Dados: <a href="https://open-meteo.com" target="_blank">Open-Meteo</a> ·
+    <a href="#">Privacidade</a> ·
+    <a href="#">Contato</a>
+  </p>
+</footer>
+
+<script>
+  // ── DASHBOARD MOCKUP CHART ──────────────────────────────────
+  const waveData = [
+    { h: 0.8, t: '5h' }, { h: 1.0, t: '6h' }, { h: 1.2, t: '7h' },
+    { h: 1.4, t: '8h' }, { h: 1.5, t: '9h' }, { h: 1.6, t: '10h', now: true },
+    { h: 1.5, t: '11h' }, { h: 1.4, t: '12h' }, { h: 1.3, t: '13h' },
+    { h: 1.2, t: '14h' }, { h: 1.1, t: '15h' }, { h: 1.0, t: '16h' },
+    { h: 0.9, t: '17h' }, { h: 0.8, t: '18h' }, { h: 0.7, t: '19h' },
+  ];
+  const CHART_H = 80; // px disponíveis para as barras
+  const maxH = Math.max(...waveData.map(d => d.h));
+  const chart = document.getElementById('dash-chart-bars');
+  if (chart) {
+    chart.innerHTML = waveData.map((d, i) => {
+      const px = Math.round((d.h / maxH) * CHART_H);
+      const color = d.h >= 1.4 ? 'var(--accent)' : d.h >= 1.0 ? 'var(--accent2)' : 'var(--muted)';
+      const delay = `${i * 0.05}s`;
+      return `
+        <div class="dash-bar-wrap">
+          <div class="dash-bar ${d.now ? 'dash-bar-now' : ''}"
+               style="height:${px}px;background:${color};transform-origin:bottom;animation-delay:${delay}"></div>
+          <div class="dash-bar-label">${d.t}</div>
+        </div>`;
+    }).join('');
+  }
+  const BEACHES = [
+    // Rio de Janeiro
+    { id: 'copacabana',  name: 'Copacabana',     region: 'rj' },
+    { id: 'ipanema',     name: 'Ipanema',         region: 'rj' },
+    { id: 'leblon',      name: 'Leblon',          region: 'rj' },
+    { id: 'sao_conrado', name: 'São Conrado',     region: 'rj' },
+    { id: 'barra',       name: 'Barra da Tijuca', region: 'rj' },
+    { id: 'recreio',     name: 'Recreio',         region: 'rj' },
+    { id: 'macumba',     name: 'Macumba',         region: 'rj' },
+    { id: 'prainha',     name: 'Prainha',         region: 'rj' },
+    { id: 'grumari',     name: 'Grumari',         region: 'rj' },
+    // Florianópolis
+    { id: 'joaquina',      name: 'Joaquina',       region: 'floripa' },
+    { id: 'praia_mole',    name: 'Praia Mole',     region: 'floripa' },
+    { id: 'barra_da_lagoa',name: 'Barra da Lagoa', region: 'floripa' },
+    { id: 'campeche',      name: 'Campeche',       region: 'floripa' },
+    // Litoral Norte SP
+    { id: 'itamambuca', name: 'Itamambuca', region: 'sp' },
+    { id: 'prumirim',   name: 'Prumirim',   region: 'sp' },
+    { id: 'maresias',   name: 'Maresias',   region: 'sp' },
+  ];
+
+  let state = {
+    selectedBeaches: [],
+  };
+
+  // ── INIT ────────────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    renderSignupBeaches();
+  });
+
+  // ── CADASTRO ────────────────────────────────────────────────
+  function renderSignupBeaches() {
+    const regions = { rj: 'beach-checkboxes-rj', floripa: 'beach-checkboxes-floripa', sp: 'beach-checkboxes-sp' };
+    Object.keys(regions).forEach(r => {
+      const container = document.getElementById(regions[r]);
+      if (!container) return;
+      container.innerHTML = BEACHES.filter(b => b.region === r).map(b => `
+        <label class="check-beach" id="cb-${b.id}" onclick="toggleSignupBeach('${b.id}', this)">
+          <div class="check-box" id="cbbox-${b.id}"></div>
+          ${b.name}
+        </label>
+      `).join('');
+    });
+  }
+
+  function toggleSignupBeach(id, el) {
+    // Free: só 1 praia — desmarca a anterior antes de marcar nova
+    if (!el.classList.contains('checked')) {
+      // Desmarca todas as outras
+      document.querySelectorAll('.check-beach.checked').forEach(other => {
+        other.classList.remove('checked');
+        other.querySelector('.check-box').innerHTML = '';
+      });
+      state.selectedBeaches = [];
+    }
+
+    el.classList.toggle('checked');
+    const box = document.getElementById(`cbbox-${id}`);
+    if (el.classList.contains('checked')) {
+      box.innerHTML = '✓';
+      state.selectedBeaches = [id];
+    } else {
+      box.innerHTML = '';
+      state.selectedBeaches = [];
+    }
+  }
+
+  async function handleSignup() {
+    const name = document.getElementById('inp-name').value.trim();
+    const email = document.getElementById('inp-email').value.trim();
+
+    if (!name) return alert('Informe seu nome.');
+    if (!email || !email.includes('@')) return alert('Informe um e-mail válido.');
+    if (state.selectedBeaches.length === 0) return alert('Selecione ao menos uma praia.');
+
+    const btn = document.getElementById('btn-cadastrar');
+    btn.disabled = true;
+    btn.textContent = 'Cadastrando...';
+
+    try {
+      const res = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, beaches: state.selectedBeaches })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || 'Erro ao cadastrar. Tente novamente.');
+        btn.disabled = false;
+        btn.textContent = 'Quero receber os alertas →';
+        return;
+      }
+
+      // Salva localmente e mostra sucesso
+      // Atualiza link do bot com o código de vínculo
+      if (data.botLink) {
+        document.querySelector('#success-box .btn-primary').href = data.botLink;
+      }
+
+      document.getElementById('form-area').style.display = 'none';
+      document.getElementById('success-name').textContent = name.split(' ')[0];
+      document.getElementById('success-box').classList.add('visible');
+
+    } catch (err) {
+      alert('Erro de conexão. Tente novamente.');
+      btn.disabled = false;
+      btn.textContent = 'Quero receber os alertas →';
+    }
+  }
+</script>
+
+</body>
+</html>
