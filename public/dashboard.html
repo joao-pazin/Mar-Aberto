@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mar Aberto — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c10; --surface: #0d1520; --surface2: #111d2e;
+      --border: rgba(255,255,255,0.07); --accent: #00d4aa; --accent2: #0099ff;
+      --text: #e8f0f7; --muted: #6b8499; --good: #00d4aa; --ok: #f0b429;
+      --bad: #ff6b35; --danger: #ff4d6d;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; min-height: 100vh; }
+
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 2.5rem;
+      background: rgba(8,12,16,0.9); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 0.05em; color: var(--text); text-decoration: none; }
+    .nav-logo span { color: var(--accent); }
+    .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-user { font-size: 0.85rem; color: var(--muted); display: none; }
+    .nav-user.visible { display: block; }
+    .btn-logout { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; display: none; font-family: 'DM Sans', sans-serif; }
+    .btn-logout.visible { display: block; }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    .page { padding-top: 80px; min-height: 100vh; }
+
+    /* ── LOGIN ── */
+    #login-screen { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 80px); padding: 2rem; }
+    .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 3rem; width: 100%; max-width: 420px; }
+    .login-title { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .login-title span { color: var(--accent); }
+    .login-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.5; }
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-group input { width: 100%; padding: 0.8rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; transition: border-color 0.2s; outline: none; }
+    .form-group input:focus { border-color: var(--accent); }
+    .btn-primary { width: 100%; padding: 0.9rem; background: var(--accent); color: #000; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 500; cursor: pointer; transition: opacity 0.2s; margin-top: 0.5rem; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-error { background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.3); color: var(--danger); border-radius: 8px; padding: 0.8rem 1rem; font-size: 0.875rem; margin-top: 1rem; display: none; }
+    .login-error.visible { display: block; }
+    .login-info { background: rgba(0,212,170,0.08); border: 1px solid rgba(0,212,170,0.2); border-radius: 8px; padding: 0.8rem 1rem; font-size: 0.85rem; color: var(--accent); margin-bottom: 1.5rem; display: none; line-height: 1.5; }
+    .login-info.visible { display: block; }
+    .login-footer { text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--muted); }
+    .login-footer a { color: var(--accent); text-decoration: none; }
+    .login-footer a:hover { text-decoration: underline; }
+    .btn-back { background: transparent; border: none; color: var(--muted); font-size: 0.85rem; cursor: pointer; padding: 0; margin-bottom: 1.5rem; font-family: 'DM Sans', sans-serif; display: none; }
+    .btn-back.visible { display: block; }
+    .btn-back:hover { color: var(--text); }
+    #inp-code { font-size: 2rem; text-align: center; letter-spacing: 0.5rem; font-weight: 500; }
+
+    /* ── DASHBOARD ── */
+    #dashboard-screen { display: none; padding: 2rem 2.5rem 4rem; }
+    #dashboard-screen.visible { display: block; }
+    .dash-header { margin-bottom: 2.5rem; }
+    .dash-greeting { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 0.05em; line-height: 1; }
+    .dash-greeting span { color: var(--accent); }
+    .dash-sub { color: var(--muted); font-size: 0.9rem; margin-top: 0.4rem; }
+    .beach-tabs-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .beach-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0; }
+    .upgrade-inline { display: flex; flex-direction: column; gap: 0.15rem; margin-left: 0.5rem; }
+    .btn-upgrade-inline { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; background: var(--accent); color: #000; border: none; border-radius: 100px; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: none; white-space: nowrap; transition: opacity 0.2s; }
+    .btn-upgrade-inline:hover { opacity: 0.85; }
+    .upgrade-hint { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+    .beach-tab { padding: 0.5rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 100px; color: var(--muted); font-size: 0.85rem; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+    .beach-tab:hover { border-color: var(--accent); color: var(--text); }
+    .beach-tab.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 500; }
+    .beach-tab.locked { opacity: 0.4; cursor: not-allowed; }
+    .beach-tab.locked::after { content: ' 🔒'; }
+    .rating-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.9rem; font-weight: 500; margin-bottom: 2rem; }
+    .rating-excelente { background: rgba(0,212,170,0.15); color: var(--good); border: 1px solid rgba(0,212,170,0.3); }
+    .rating-bom       { background: rgba(0,153,255,0.15); color: var(--accent2); border: 1px solid rgba(0,153,255,0.3); }
+    .rating-regular   { background: rgba(240,180,41,0.15); color: var(--ok); border: 1px solid rgba(240,180,41,0.3); }
+    .rating-fraco     { background: rgba(255,107,53,0.15); color: var(--bad); border: 1px solid rgba(255,107,53,0.3); }
+    .rating-pessimo   { background: rgba(255,77,109,0.15); color: var(--danger); border: 1px solid rgba(255,77,109,0.3); }
+    .rating-description { font-size: 0.85rem; font-style: italic; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.5; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.4rem; }
+    .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+    .stat-value { font-size: 1.8rem; font-weight: 500; line-height: 1; margin-bottom: 0.2rem; }
+    .stat-unit { font-size: 0.8rem; color: var(--muted); }
+    .stat-sub  { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* ── CHART ── */
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+    .chart-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.75rem; }
+    .chart-title { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .chart-toggle { display: flex; gap: 0.25rem; }
+    .chart-toggle button {
+      padding: 0.25rem 0.75rem; border-radius: 100px; font-size: 0.78rem;
+      border: 1px solid var(--border); background: transparent; color: var(--muted);
+      cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+    }
+    .chart-toggle button:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
+    .chart-toggle button.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 500; }
+    .chart-wrap { position: relative; height: 180px; }
+
+    .week-title { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .week-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+    .week-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; cursor: pointer; transition: border-color 0.2s; }
+    .week-card:hover { border-color: rgba(255,255,255,0.15); }
+    .week-card.active { border-color: var(--accent); }
+    .week-day { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+    .week-rating { font-size: 1.1rem; margin-bottom: 0.4rem; }
+    .week-stats { font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
+    .loading { display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: var(--muted); font-size: 0.9rem; padding: 3rem 0; }
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .premium-banner { background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(0,153,255,0.08)); border: 1px solid rgba(0,212,170,0.2); border-radius: 12px; padding: 2rem; text-align: center; margin-bottom: 2rem; }
+    .premium-banner h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .premium-banner p { color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem; }
+    .btn-premium { display: inline-block; padding: 0.7rem 1.5rem; background: var(--accent); color: #000; border-radius: 8px; font-weight: 500; text-decoration: none; font-size: 0.9rem; transition: opacity 0.2s; }
+    .btn-premium:hover { opacity: 0.85; }
+    .btn-edit-beaches { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.9rem; background: transparent; border: 1px solid var(--border); border-radius: 100px; color: var(--muted); font-size: 0.8rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; margin-bottom: 2rem; }
+    .btn-edit-beaches:hover { border-color: var(--accent); color: var(--text); }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; width: 90%; max-width: 520px; max-height: 85vh; overflow-y: auto; }
+    .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+    .modal-sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem; }
+    .beach-grid-modal { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 1.5rem; }
+    .beach-chip { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.9rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 0.85rem; color: var(--muted); transition: all 0.15s; user-select: none; }
+    .beach-chip:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+    .beach-chip.selected { background: rgba(0,212,170,0.1); border-color: var(--accent); color: var(--text); }
+    .beach-chip .chip-check { font-size: 1rem; width: 1.2rem; text-align: center; }
+    .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+    .btn-modal-cancel { padding: 0.6rem 1.2rem; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-size: 0.85rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .btn-modal-confirm { padding: 0.6rem 1.4rem; background: var(--accent); border: none; border-radius: 8px; color: #000; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.2s; }
+    .btn-modal-confirm:hover { opacity: 0.85; }
+    .btn-modal-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+    @media (max-width: 600px) {
+      nav { padding: 1rem 1.2rem; }
+      #dashboard-screen { padding: 1.5rem 1.2rem 3rem; }
+      .login-card { padding: 2rem 1.5rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">〜 MAR <span>ABERTO</span></a>
+  <div class="nav-right">
+    <span class="nav-user" id="nav-user"></span>
+    <button class="btn-logout" id="btn-logout" onclick="logout()">Sair</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- ── LOGIN ── -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div id="step-email">
+        <div class="login-title">ENTRAR NO <span>DASHBOARD</span></div>
+        <div class="login-sub">Digite seu e-mail cadastrado. Vamos enviar um código pelo Telegram.</div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="inp-email" placeholder="seu@email.com"
+            onkeydown="if(event.key==='Enter') requestCode()" />
+        </div>
+        <button class="btn-primary" id="btn-request" onclick="requestCode()">Enviar código →</button>
+        <div class="login-error" id="error-email"></div>
+        <div class="login-footer">Ainda não tem conta? <a href="/#cadastro">Cadastre-se grátis</a></div>
+      </div>
+
+      <div id="step-code" style="display:none">
+        <button class="btn-back visible" onclick="backToEmail()">← Voltar</button>
+        <div class="login-title">CÓDIGO <span>ENVIADO</span></div>
+        <div class="login-info visible">📱 Enviamos um código de 6 dígitos para o seu Telegram. Válido por 10 minutos.</div>
+        <div class="form-group">
+          <label>Código</label>
+          <input type="text" id="inp-code" placeholder="000000" maxlength="6"
+            inputmode="numeric" onkeydown="if(event.key==='Enter') verifyCode()" />
+        </div>
+        <button class="btn-primary" id="btn-verify" onclick="verifyCode()">Entrar →</button>
+        <div class="login-error" id="error-code"></div>
+        <div class="login-footer" style="margin-top:1.5rem">
+          Não recebeu? <a href="#" onclick="requestCode(); return false;">Reenviar código</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="dashboard-screen">
+    <div class="dash-header">
+      <div class="dash-greeting">OLÁ, <span id="dash-name">SURFISTA</span>!</div>
+      <div class="dash-sub" id="dash-date"></div>
+    </div>
+    <div id="btn-edit-beaches-wrap" style="display:none"><button class="btn-edit-beaches" onclick="openBeachModal()">✏️ Editar praias</button></div>
+    <div class="beach-tabs-row">
+      <div class="beach-tabs" id="beach-tabs"></div>
+      <div class="upgrade-inline" id="upgrade-inline" style="display:none">
+        <a href="https://t.me/maraberto_bot" target="_blank" class="btn-upgrade-inline">⚡ Assinar Premium</a>
+        <span class="upgrade-hint">Ao clicar, vá ao Telegram e digite /upgrade</span>
+      </div>
+    </div>
+    <div id="forecast-content">
+      <div class="loading"><div class="spinner"></div> Buscando condições...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BEACH_NAMES = {
+  copacabana:'Copacabana', ipanema:'Ipanema', leblon:'Leblon',
+  sao_conrado:'São Conrado', barra:'Barra da Tijuca', recreio:'Recreio',
+  macumba:'Macumba', prainha:'Prainha', grumari:'Grumari',
+  joaquina:'Joaquina', praia_mole:'Praia Mole', barra_da_lagoa:'Barra da Lagoa',
+  campeche:'Campeche', itamambuca:'Itamambuca', prumirim:'Prumirim', maresias:'Maresias',
+};
+
+const state = { user:null, token:null, activeBeach:null, cache:{}, currentData:null };
+let waveChartInst = null;
+let windChartInst = null;
+
+const fmt = (v, d=1) => (v==null||isNaN(v)) ? '—' : Number(v).toFixed(d);
+const dir = deg => deg==null ? '—' : ['N','NE','L','SE','S','SO','O','NO'][Math.round(deg/45)%8];
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('ma_session');
+  if (saved) {
+    try {
+      const s = JSON.parse(saved);
+      if (s.token && s.user) { state.token = s.token; state.user = s.user; showDashboard(); return; }
+    } catch {}
+  }
+  showLogin();
+});
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+async function requestCode() {
+  const email = document.getElementById('inp-email').value.trim();
+  const errEl = document.getElementById('error-email');
+  const btn   = document.getElementById('btn-request');
+  errEl.classList.remove('visible');
+  if (!email || !email.includes('@')) { showErr(errEl, 'Informe um e-mail válido.'); return; }
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const res  = await fetch('/api/auth/request-code', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) });
+    const data = await res.json();
+    if (!res.ok) { showErr(errEl, (data.needsBot ? '⚠️ ' : '') + (data.error || 'Erro ao enviar código.')); return; }
+    document.getElementById('step-email').style.display = 'none';
+    document.getElementById('step-code').style.display  = 'block';
+    setTimeout(() => document.getElementById('inp-code').focus(), 100);
+  } catch { showErr(errEl, 'Erro de conexão. Tente novamente.'); }
+  finally  { btn.disabled = false; btn.textContent = 'Enviar código →'; }
+}
+
+function backToEmail() {
+  document.getElementById('step-code').style.display  = 'none';
+  document.getElementById('step-email').style.display = 'block';
+  document.getElementById('error-code').classList.remove('visible');
+  document.getElementById('inp-code').value = '';
+}
+
+async function verifyCode() {
+  const email = document.getElementById('inp-email').value.trim();
+  const code  = document.getElementById('inp-code').value.trim();
+  const errEl = document.getElementById('error-code');
+  const btn   = document.getElementById('btn-verify');
+  errEl.classList.remove('visible');
+  if (!code || code.length !== 6) { showErr(errEl, 'Digite o código de 6 dígitos.'); return; }
+  btn.disabled = true; btn.textContent = 'Verificando...';
+  try {
+    const res  = await fetch('/api/auth/verify-code', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email,code}) });
+    const data = await res.json();
+    if (!res.ok) { showErr(errEl, data.error || 'Código inválido.'); return; }
+    state.token = data.token; state.user = data.user;
+    localStorage.setItem('ma_session', JSON.stringify({token:state.token, user:state.user}));
+    showDashboard();
+  } catch { showErr(errEl, 'Erro de conexão. Tente novamente.'); }
+  finally  { btn.disabled = false; btn.textContent = 'Entrar →'; }
+}
+
+function showErr(el, msg) { el.textContent = msg; el.classList.add('visible'); }
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('dashboard-screen').classList.remove('visible');
+}
+
+function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard-screen').classList.add('visible');
+  document.getElementById('dash-name').textContent = (state.user.firstName || 'SURFISTA').toUpperCase();
+  document.getElementById('nav-user').textContent  = state.user.email;
+  document.getElementById('nav-user').classList.add('visible');
+  document.getElementById('btn-logout').classList.add('visible');
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('pt-BR', {
+    weekday:'long', day:'numeric', month:'long', timeZone:'America/Sao_Paulo'
+  });
+  renderTabs();
+}
+
+function renderTabs() {
+  const container  = document.getElementById('beach-tabs');
+  const beaches    = state.user.beaches || [];
+  const isPremium  = state.user.isPremium;
+  const accessible = isPremium ? beaches : beaches.slice(0,1);
+  const locked     = isPremium ? [] : beaches.slice(1);
+  container.innerHTML = [
+    ...accessible.map(id => `<button class="beach-tab ${id===state.activeBeach?'active':''}" onclick="selectBeach('${id}')">${BEACH_NAMES[id]||id}</button>`),
+    ...locked.map(id     => `<button class="beach-tab locked" title="Premium necessário">${BEACH_NAMES[id]||id}</button>`),
+  ].join('');
+  if (!state.activeBeach) selectBeach(accessible[0]);
+  // Mostrar botão de upgrade só para usuários free
+  const upgradeEl = document.getElementById('upgrade-inline');
+  if (upgradeEl) upgradeEl.style.display = isPremium ? 'none' : 'flex';
+  const editWrap = document.getElementById('btn-edit-beaches-wrap');
+  if (editWrap) editWrap.style.display = isPremium ? 'block' : 'none';
+}
+
+async function selectBeach(beachId) {
+  if (!beachId) return;
+  state.activeBeach = beachId;
+  renderTabs();
+  const content = document.getElementById('forecast-content');
+  content.innerHTML = '<div class="loading"><div class="spinner"></div> Buscando condições...</div>';
+  try {
+    let data = state.cache[beachId];
+    if (!data) {
+      const res = await fetch(`/api/forecast?beach=${beachId}&days=7`, { headers:{'Authorization':`Bearer ${state.token}`} });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error();
+      data = await res.json();
+      state.cache[beachId] = data;
+    }
+    state.currentData = data;
+    renderForecast(data);
+  } catch {
+    content.innerHTML = '<p style="color:var(--muted);padding:2rem 0">Erro ao buscar dados. Tente novamente.</p>';
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderForecast(data) {
+  const content = document.getElementById('forecast-content');
+  const today   = data.daily[0];
+  if (!today) { content.innerHTML = '<p style="color:var(--muted)">Sem dados.</p>'; return; }
+
+  const r      = getRating(today, data.beach);
+  const rClass = 'rating-' + r.label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+
+  content.innerHTML = `
+    <div class="rating-badge ${rClass}">${r.emoji} ${r.label} hoje</div>
+    <div class="rating-description">${getRatingDescription(today, data.beach)}</div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Ondas</div>
+        <div class="stat-value">${fmt(today.waveHeight?.avg)}</div>
+        <div class="stat-unit">metros</div>
+        <div class="stat-sub">pico ${fmt(today.waveHeight?.max)}m</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Período</div>
+        <div class="stat-value">${fmt(today.wavePeriod?.avg)}</div>
+        <div class="stat-unit">segundos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Swell</div>
+        <div class="stat-value">${fmt(today.swellHeight?.avg)}</div>
+        <div class="stat-unit">metros · ${fmt(today.swellPeriod?.avg)}s</div>
+        <div class="stat-sub">Dir: ${dir(today.swellDirection)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Vento</div>
+        <div class="stat-value">${fmt(today.windSpeed?.avg)}</div>
+        <div class="stat-unit">km/h · ${dir(today.windDirection)}</div>
+        <div class="stat-sub">rajadas ${fmt(today.windGusts?.max)}km/h</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Chuva</div>
+        <div class="stat-value">${fmt(today.precipitation)}</div>
+        <div class="stat-unit">mm</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Temp. água</div>
+        <div class="stat-value">${fmt(today.seaTemp)}</div>
+        <div class="stat-unit">°C · ar ${fmt(today.airTemp)}°C</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-title">Altura das ondas</div>
+        <div class="chart-toggle">
+          <button id="wave-btn-hoje"   class="active" onclick="setChartMode('hoje',   'wave')">Hoje</button>
+          <button id="wave-btn-amanha"            onclick="setChartMode('amanha', 'wave')">Amanhã</button>
+          <button id="wave-btn-semana"            onclick="setChartMode('semana', 'wave')">7 dias</button>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="wave-chart"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-title">Vento</div>
+        <div class="chart-toggle">
+          <button id="wind-btn-hoje"   class="active" onclick="setChartMode('hoje',   'wind')">Hoje</button>
+          <button id="wind-btn-amanha"            onclick="setChartMode('amanha', 'wind')">Amanhã</button>
+          <button id="wind-btn-semana"            onclick="setChartMode('semana', 'wind')">7 dias</button>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="wind-chart"></canvas></div>
+    </div>
+
+    ${!state.user.isPremium && (state.user.beaches?.length > 1) ? `
+    <div class="premium-banner">
+      <h3>🔒 ACESSO PREMIUM</h3>
+      <p>Você tem ${state.user.beaches.length} praias salvas. Desbloqueie todas por R$5/mês via PIX.</p>
+      <a href="https://t.me/maraberto_bot?start=premium" class="btn-premium" target="_blank">Assinar Premium →</a>
+    </div>` : ''}
+
+    <div class="week-title">Previsão da semana</div>
+    <div class="week-grid">
+      ${data.daily.map((day, i) => {
+        const dr = getRating(day, data.beach);
+        return `<div class="week-card ${i===0?'active':''}" onclick="selectDay(this,${i})">
+          <div class="week-day">${day.label}</div>
+          <div class="week-rating">${dr.emoji} ${dr.label}</div>
+          <div class="week-stats">🌊 ${fmt(day.waveHeight?.avg)}m · ${fmt(day.wavePeriod?.avg)}s<br>💨 ${fmt(day.windSpeed?.avg)}km/h ${dir(day.windDirection)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  renderCharts('hoje');
+}
+
+// ── TOGGLE ────────────────────────────────────────────────────────────────────
+function setChartMode(mode, chart) {
+  ['hoje','amanha','semana'].forEach(m => {
+    const btn = document.getElementById(`${chart}-btn-${m}`);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  if (chart === 'wave') renderWaveChart(mode);
+  else                  renderWindChart(mode);
+}
+
+function getHourly(dayIndex) {
+  return state.currentData?.daily[dayIndex]?.hourly || [];
+}
+
+function getWeekData() {
+  const daily = state.currentData?.daily || [];
+  return {
+    labels:  daily.map(d => d.label),
+    avg:     daily.map(d => d.waveHeight?.avg ?? null),
+    max:     daily.map(d => d.waveHeight?.max ?? null),
+    windAvg: daily.map(d => d.windSpeed?.avg  ?? null),
+    windMax: daily.map(d => d.windGusts?.max  ?? null),
+  };
+}
+
+function renderCharts(mode) {
+  renderWaveChart(mode);
+  renderWindChart(mode);
+}
+
+function renderWaveChart(mode) {
+  const canvas = document.getElementById('wave-chart');
+  if (!canvas) return;
+  if (waveChartInst) { waveChartInst.destroy(); waveChartInst = null; }
+
+  let labels, datasets;
+
+  if (mode === 'semana') {
+    const w = getWeekData();
+    labels   = w.labels;
+    datasets = [
+      { label:'Média (m)', data:w.avg, backgroundColor:'rgba(0,212,170,0.7)', borderColor:'rgba(0,212,170,0.9)', borderWidth:1, borderRadius:4 },
+      { label:'Pico (m)',  data:w.max, backgroundColor:'rgba(0,212,170,0.25)', borderColor:'rgba(0,212,170,0.5)', borderWidth:1, borderRadius:4 },
+    ];
+  } else {
+    const hourly = getHourly(mode === 'amanha' ? 1 : 0);
+    labels   = hourly.map(h => h.time.slice(11,16));
+    datasets = [{ label:'Ondas (m)', data:hourly.map(h => h.waveHeight), backgroundColor:'rgba(0,212,170,0.7)', borderColor:'rgba(0,212,170,0.9)', borderWidth:1, borderRadius:3 }];
+  }
+
+  waveChartInst = new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display: mode==='semana', labels:{color:'#6b8499',font:{size:11},boxWidth:14} } },
+      scales:{
+        x:{ ticks:{color:'#6b8499',font:{size:11}}, grid:{color:'rgba(255,255,255,0.04)'} },
+        y:{ ticks:{color:'#6b8499',font:{size:11}}, grid:{color:'rgba(255,255,255,0.04)'}, min:0,
+            title:{display:true,text:'m',color:'#6b8499',font:{size:11}} },
+      },
+    },
+  });
+}
+
+function renderWindChart(mode) {
+  const canvas = document.getElementById('wind-chart');
+  if (!canvas) return;
+  if (windChartInst) { windChartInst.destroy(); windChartInst = null; }
+
+  let labels, datasets;
+
+  if (mode === 'semana') {
+    const w = getWeekData();
+    labels   = w.labels;
+    datasets = [
+      { label:'Vento médio (km/h)', data:w.windAvg, borderColor:'#0099ff', backgroundColor:'rgba(0,153,255,0.08)', tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:'#0099ff' },
+      { label:'Rajadas máx (km/h)', data:w.windMax, borderColor:'rgba(0,153,255,0.45)', backgroundColor:'transparent', tension:0.4, borderDash:[4,4], pointRadius:3, pointBackgroundColor:'rgba(0,153,255,0.45)' },
+    ];
+  } else {
+    const hourly = getHourly(mode === 'amanha' ? 1 : 0);
+    labels   = hourly.map(h => h.time.slice(11,16));
+    datasets = [
+      { label:'Vento (km/h)',   data:hourly.map(h => h.windSpeed),  borderColor:'#0099ff', backgroundColor:'rgba(0,153,255,0.08)', tension:0.4, fill:true, pointRadius:3, pointBackgroundColor:'#0099ff' },
+      { label:'Rajadas (km/h)', data:hourly.map(h => h.windGusts),  borderColor:'rgba(0,153,255,0.4)', backgroundColor:'transparent', tension:0.4, borderDash:[4,4], pointRadius:2, pointBackgroundColor:'rgba(0,153,255,0.4)' },
+    ];
+  }
+
+  windChartInst = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, labels:{color:'#6b8499',font:{size:11},boxWidth:20} } },
+      scales:{
+        x:{ ticks:{color:'#6b8499',font:{size:11}}, grid:{color:'rgba(255,255,255,0.04)'} },
+        y:{ ticks:{color:'#6b8499',font:{size:11}}, grid:{color:'rgba(255,255,255,0.04)'}, min:0,
+            title:{display:true,text:'km/h',color:'#6b8499',font:{size:11}} },
+      },
+    },
+  });
+}
+
+function renderWaveChartByIndex(index) {
+  const canvas = document.getElementById('wave-chart');
+  if (!canvas) return;
+  if (waveChartInst) { waveChartInst.destroy(); waveChartInst = null; }
+  const hourly = getHourly(index);
+  const labels   = hourly.map(h => h.time.slice(11,16));
+  const datasets = [{ label:'Ondas (m)', data:hourly.map(h => h.waveHeight), backgroundColor:'rgba(0,212,170,0.7)', borderColor:'rgba(0,212,170,0.9)', borderWidth:1, borderRadius:3 }];
+  waveChartInst = new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{color:'#6b8499',font:{size:11}}, grid:{color:'rgba(255,255,255,0.04)'} },
+        y:{ ticks:{color:'#6b8499',font:{size:11}}, grid:{color:'rgba(255,255,255,0.04)'}, min:0,
+            title:{display:true,text:'m',color:'#6b8499',font:{size:11}} },
+      },
+    },
+  });
+}
+
+function renderWindChartByIndex(index) {
+  const canvas = document.getElementById('wind-chart');
+  if (!canvas) return;
+  if (windChartInst) { windChartInst.destroy(); windChartInst = null; }
+  const hourly = getHourly(index);
+  const labels   = hourly.map(h => h.time.slice(11,16));
+  const datasets = [
+    { label:'Vento (km/h)',   data:hourly.map(h => h.windSpeed), borderColor:'#0099ff', backgroundColor:'rgba(0,153,255,0.08)', tension:0.4, fill:true, pointRadius:3, pointBackgroundColor:'#0099ff' },
+    { label:'Rajadas (km/h)', data:hourly.map(h => h.windGusts), borderColor:'rgba(0,153,255,0.4)', backgroundColor:'transparent', tension:0.4, borderDash:[4,4], pointRadius:2, pointBackgroundColor:'rgba(0,153,255,0.4)' },
+  ];
+  windChartInst = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, labels:{color:'#6b8499',font:{size:11},boxWidth:20} } },
+      scales:{
+        x:{ ticks:{color:'#6b8499',font:{size:11}}, grid:{color:'rgba(255,255,255,0.04)'} },
+        y:{ ticks:{color:'#6b8499',font:{size:11}}, grid:{color:'rgba(255,255,255,0.04)'}, min:0,
+            title:{display:true,text:'km/h',color:'#6b8499',font:{size:11}} },
+      },
+    },
+  });
+}
+
+function selectDay(el, index) {
+  const data = state.currentData;
+  if (!data) return;
+  document.querySelectorAll('.week-card').forEach((c,i) => c.classList.toggle('active', i===index));
+  const day = data.daily[index];
+  if (!day) return;
+
+  // Badge + descrição
+  const r      = getRating(day, data.beach);
+  const rClass = 'rating-' + r.label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const label  = index === 0 ? `${r.emoji} ${r.label} hoje` : `${r.emoji} ${r.label} — ${day.label}`;
+  document.querySelector('.rating-badge').className   = `rating-badge ${rClass}`;
+  document.querySelector('.rating-badge').textContent = label;
+  document.querySelector('.rating-description').textContent = getRatingDescription(day, data.beach);
+
+  // KPIs
+  const fmt2 = v => (v == null || isNaN(v)) ? '—' : Number(v).toFixed(1);
+  const dir2  = d => d == null ? '—' : ['N','NE','L','SE','S','SO','O','NO'][Math.round(d/45)%8];
+  const qs = s => document.querySelector(s);
+  // onda
+  const wCards = document.querySelectorAll('.stat-card');
+  if (wCards.length >= 6) {
+    wCards[0].querySelector('.stat-value').textContent = fmt2(day.waveHeight?.avg);
+    wCards[0].querySelector('.stat-sub').textContent   = `pico ${fmt2(day.waveHeight?.max)}m`;
+    wCards[1].querySelector('.stat-value').textContent = fmt2(day.wavePeriod?.avg);
+    wCards[2].querySelector('.stat-value').textContent = fmt2(day.swellHeight?.avg);
+    wCards[2].querySelector('.stat-sub').textContent   = `metros · ${fmt2(day.swellPeriod?.avg)}s · Dir ${dir2(day.swellDirection)}`;
+    wCards[3].querySelector('.stat-value').textContent = fmt2(day.windSpeed?.avg);
+    wCards[3].querySelector('.stat-sub').textContent   = `km/h · ${dir2(day.windDirection)}\nrajadas ${fmt2(day.windGusts?.max)}km/h`;
+    wCards[4].querySelector('.stat-value').textContent = fmt2(day.precipitation);
+    wCards[5].querySelector('.stat-value').textContent = fmt2(day.seaTemp);
+    wCards[5].querySelector('.stat-sub').textContent   = `°C · ar ${fmt2(day.airTemp)}°C`;
+  }
+
+  // Gráficos — re-renderiza com o hourly do dia selecionado
+  const mode = index === 0 ? 'hoje' : index === 1 ? 'amanha' : 'dia';
+  if (index <= 1) {
+    // Hoje e amanhã: usa getHourly normal
+    renderWaveChart(mode);
+    renderWindChart(mode);
+    // Garante botões corretos
+    ['wave','wind'].forEach(chart => {
+      ['hoje','amanha','semana'].forEach(m => {
+        const btn = document.getElementById(`${chart}-btn-${m}`);
+        if (btn) btn.classList.toggle('active', m === mode);
+      });
+    });
+  } else {
+    // Outros dias: renderiza com o hourly do índice específico
+    renderWaveChartByIndex(index);
+    renderWindChartByIndex(index);
+    ['wave','wind'].forEach(chart => {
+      ['hoje','amanha','semana'].forEach(m => {
+        const btn = document.getElementById(`${chart}-btn-${m}`);
+        if (btn) btn.classList.remove('active');
+      });
+    });
+  }
+}
+
+// ── RATING ────────────────────────────────────────────────────────────────────
+function dirToDegs(d) { return {N:0,NE:45,L:90,SE:135,S:180,SO:225,O:270,NO:315}[d]??null; }
+function swellScore(swellDeg, facing, period=0) {
+  if (swellDeg==null||!facing) return 1;
+  const fd=dirToDegs(facing); if(fd==null) return 1;
+  let diff=Math.abs(swellDeg-fd); if(diff>180) diff=360-diff;
+  let s=diff<=22.5?3:diff<=45?2:diff<=67.5?1:diff<=90?0:-1;
+  if(s===3&&period<12) s=2; return s;
+}
+function windScore(speed, wDeg, facing) {
+  if(wDeg==null||!facing){ return speed<10?2:speed<20?1:speed<30?0:speed>=40?-2:-1; }
+  const fd=dirToDegs(facing); if(fd==null) return speed<10?2:speed<20?1:0;
+  let diff=Math.abs(wDeg-fd); if(diff>180) diff=360-diff;
+  if(diff>=135) return speed<10?3:speed<20?2:speed<30?1:0;
+  if(diff<=45)  return speed<10?0:speed<20?-1:speed<30?-2:-3;
+  return speed<15?1:speed<25?0:speed<35?-1:-2;
+}
+function getRating(day, beach) {
+  const waveH=day.waveHeight?.avg||0, period=day.wavePeriod?.avg||0;
+  const wind=day.windSpeed?.avg||0, windDir=day.windDirection??null;
+  const rain=day.precipitation||0, swellDir=day.swellDirection??null;
+  const swellP=day.swellPeriod?.avg||0;
+  let s=0;
+  if(waveH>=0.8&&waveH<=2.5) s+=3; else if(waveH>=0.5) s+=1; else if(waveH>2.5&&waveH<=4) s+=2; else if(waveH>4) s-=1;
+  s+=period>=14?3:period>=12?2:period>=9?1:0;
+  s+=swellScore(swellDir,beach?.facing,swellP);
+  s+=windScore(wind,windDir,beach?.facing);
+  if(rain>10) s-=3; else if(rain>5) s-=2; else if(rain>1) s-=1;
+  const big=waveH>2.5;
+  if(!big&&s>=11) return {emoji:'🔥',label:'Excelente'};
+  if(s>=8)        return {emoji:'✅',label:'Bom'};
+  if(s>=4)        return {emoji:'😐',label:'Regular'};
+  if(s>=2)        return {emoji:'😞',label:'Fraco'};
+  return          {emoji:'⛔',label:'Péssimo'};
+}
+
+// ── RATING DESCRIPTION ───────────────────────────────────────────────────────
+function degreesToDir(deg) {
+  if (deg == null) return '—';
+  const dirs = ['N','NE','L','SE','S','SO','O','NO'];
+  return dirs[Math.round(deg / 45) % 8];
+}
+function getRatingDescription(day, beach = null) {
+  const waveH   = day.waveHeight?.avg  || 0;
+  const waveMax = day.waveHeight?.max  || 0;
+  const period  = day.wavePeriod?.avg  || 0;
+  const wind    = day.windSpeed?.avg   || 0;
+  const windDir = day.windDirection    ?? null;
+  const rain    = day.precipitation    || 0;
+  const swellDir = day.swellDirection  ?? null;
+  const fmt = v => (v == null || isNaN(v)) ? '—' : Number(v).toFixed(1);
+  const parts = [];
+
+  // Onda
+  if (waveH >= 0.8 && waveH <= 2.5) {
+    const adj = waveH >= 1.8 ? 'com bom tamanho' : waveH >= 1.2 ? 'de tamanho ideal' : 'pequenas mas surfáveis';
+    parts.push(`Ondas ${adj} (${fmt(waveH)}m)`);
+  } else if (waveH > 2.5 && waveH <= 4) {
+    parts.push(`Mar grande (${fmt(waveH)}m, pico até ${fmt(waveMax)}m) — recomendado para surfistas experientes`);
+  } else if (waveH > 4) {
+    parts.push(`Mar muito grande (${fmt(waveH)}m) — perigoso para a maioria`);
+  } else {
+    parts.push(`Ondas fracas (${fmt(waveH)}m)`);
+  }
+
+  // Período
+  if (period >= 14)      parts.push(`período longo de ${fmt(period)}s traz potência e organização`);
+  else if (period >= 12) parts.push(`período de ${fmt(period)}s garante ondas organizadas`);
+  else if (period >= 9)  parts.push(`período moderado de ${fmt(period)}s`);
+  else                   parts.push(`período curto (${fmt(period)}s) — marolinha bagunçada`);
+
+  // Alinhamento do swell
+  if (swellDir != null && beach?.facing) {
+    const fd = dirToDegs(beach.facing);
+    if (fd != null) {
+      let diff = Math.abs(swellDir - fd);
+      if (diff > 180) diff = 360 - diff;
+      const label = degreesToDir(swellDir);
+      if (diff <= 22.5)    parts.push(`swell ${label} chegando direto na praia`);
+      else if (diff <= 45) parts.push(`swell ${label} em ângulo favorável`);
+      else if (diff <= 90) parts.push(`swell ${label} chegando de lado`);
+      else                 parts.push(`swell ${label} desfavorável para esta praia`);
+    }
+  }
+
+  // Vento
+  if (windDir != null && beach?.facing) {
+    const fd = dirToDegs(beach.facing);
+    if (fd != null) {
+      let diff = Math.abs(windDir - fd);
+      if (diff > 180) diff = 360 - diff;
+      const isOffshore = diff >= 135, isOnshore = diff <= 45;
+      if (isOffshore) {
+        if (wind < 10)      parts.push(`vento offshore leve (${fmt(wind)} km/h) — condições perfeitas`);
+        else if (wind < 20) parts.push(`vento offshore moderado (${fmt(wind)} km/h) favorece as ondas`);
+        else                parts.push(`vento offshore forte (${fmt(wind)} km/h)`);
+      } else if (isOnshore) {
+        if (wind < 10)      parts.push(`vento onshore fraco (${fmt(wind)} km/h)`);
+        else if (wind < 20) parts.push(`vento onshore (${fmt(wind)} km/h) atrapalha um pouco`);
+        else                parts.push(`vento onshore forte (${fmt(wind)} km/h) prejudica as condições`);
+      } else {
+        if (wind < 15)      parts.push(`vento lateral fraco (${fmt(wind)} km/h)`);
+        else                parts.push(`vento lateral de ${fmt(wind)} km/h`);
+      }
+    }
+  } else {
+    if (wind < 10)      parts.push(`vento fraco (${fmt(wind)} km/h)`);
+    else if (wind < 20) parts.push(`vento moderado (${fmt(wind)} km/h)`);
+    else if (wind < 30) parts.push(`vento forte (${fmt(wind)} km/h) atrapalha`);
+    else                parts.push(`vento muito forte (${fmt(wind)} km/h) compromete as condições`);
+  }
+
+  // Chuva
+  if (rain > 10)      parts.push(`chuva intensa (${fmt(rain)} mm)`);
+  else if (rain > 5)  parts.push(`chuva moderada (${fmt(rain)} mm)`);
+  else if (rain > 1)  parts.push(`chuva fraca (${fmt(rain)} mm)`);
+
+  if (parts.length === 0) return '';
+  const [first, ...rest] = parts;
+  return first.charAt(0).toUpperCase() + first.slice(1)
+    + (rest.length ? ', ' + rest.join(', ') : '') + '.';
+}
+
+// ── MODAL EDITAR PRAIAS ──────────────────────────────────────────────────────
+const ALL_BEACHES = [
+  'copacabana','ipanema','leblon','sao_conrado','barra','recreio','macumba','prainha','grumari',
+  'joaquina','praia_mole','barra_da_lagoa','campeche','itamambuca','prumirim','maresias',
+];
+
+let modalSelection = [];
+
+function openBeachModal() {
+  modalSelection = [...(state.user.beaches || [])];
+  const grid = document.getElementById('modal-beach-grid');
+  grid.innerHTML = ALL_BEACHES.map(id => `
+    <div class="beach-chip ${modalSelection.includes(id) ? 'selected' : ''}" id="chip-${id}" onclick="toggleChip('${id}')">
+      <span class="chip-check">${modalSelection.includes(id) ? '✅' : '🏖️'}</span>
+      <span>${BEACH_NAMES[id] || id}</span>
+    </div>
+  `).join('');
+  document.getElementById('modal-beaches').classList.add('open');
+}
+
+function toggleChip(id) {
+  const chip = document.getElementById('chip-' + id);
+  if (modalSelection.includes(id)) {
+    modalSelection = modalSelection.filter(b => b !== id);
+    chip.classList.remove('selected');
+    chip.querySelector('.chip-check').textContent = '🏖️';
+  } else {
+    modalSelection.push(id);
+    chip.classList.add('selected');
+    chip.querySelector('.chip-check').textContent = '✅';
+  }
+}
+
+function closeBeachModal() {
+  document.getElementById('modal-beaches').classList.remove('open');
+}
+
+async function confirmBeachModal() {
+  if (modalSelection.length === 0) {
+    alert('Selecione ao menos uma praia.');
+    return;
+  }
+  const btn = document.getElementById('btn-modal-confirm');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  try {
+    const res = await fetch('/api/sheets-proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'upsert', chatId: state.user.chatId, beaches: modalSelection })
+    });
+    if (!res.ok) throw new Error('Erro ao salvar');
+
+    // Atualiza estado local e localStorage
+    state.user.beaches = modalSelection;
+    const session = JSON.parse(localStorage.getItem('ma_session') || '{}');
+    session.user = state.user;
+    localStorage.setItem('ma_session', JSON.stringify(session));
+
+    closeBeachModal();
+    renderTabs();
+    // Recarrega previsão da praia ativa se ela saiu da lista
+    if (!modalSelection.includes(state.activeBeach)) {
+      state.activeBeach = null;
+      selectBeach(modalSelection[0]);
+    }
+  } catch (e) {
+    alert('Erro ao salvar as praias. Tente novamente.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Salvar praias';
+  }
+}
+
+// ── LOGOUT ────────────────────────────────────────────────────────────────────
+function logout() {
+  localStorage.removeItem('ma_session');
+  Object.assign(state, {user:null,token:null,activeBeach:null,cache:{},currentData:null});
+  waveChartInst = null; windChartInst = null;
+  document.getElementById('nav-user').classList.remove('visible');
+  document.getElementById('btn-logout').classList.remove('visible');
+  document.getElementById('inp-email').value='';
+  document.getElementById('inp-code').value='';
+  document.getElementById('step-code').style.display='none';
+  document.getElementById('step-email').style.display='block';
+  document.getElementById('error-email').classList.remove('visible');
+  document.getElementById('error-code').classList.remove('visible');
+  showLogin();
+}
+</script>
+
+  <!-- ── MODAL EDITAR PRAIAS ── -->
+  <div class="modal-overlay" id="modal-beaches">
+    <div class="modal">
+      <div class="modal-title">Editar Praias</div>
+      <div class="modal-sub">Selecione as praias que quer monitorar. As alertas do Telegram serão atualizadas automaticamente.</div>
+      <div class="beach-grid-modal" id="modal-beach-grid"></div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeBeachModal()">Cancelar</button>
+        <button class="btn-modal-confirm" id="btn-modal-confirm" onclick="confirmBeachModal()">Salvar praias</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
