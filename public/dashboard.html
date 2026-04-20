@@ -827,7 +827,7 @@ async function confirmBeachModal() {
     const res = await fetch('/api/sheets-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'upsert', chatId: state.user.chatId, beaches: modalSelection })
+      body: JSON.stringify({ action: 'upsert', email: state.user.email, beaches: modalSelection })
     });
     if (!res.ok) throw new Error('Erro ao salvar');
 
