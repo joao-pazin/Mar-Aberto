@@ -69,15 +69,9 @@
     .dash-sub { color: var(--muted); font-size: 0.9rem; margin-top: 0.4rem; }
     .beach-tabs-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; }
     .beach-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0; }
-    .upgrade-inline { display: flex; flex-direction: column; gap: 0.15rem; margin-left: 0.5rem; }
-    .btn-upgrade-inline { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; background: var(--accent); color: #000; border: none; border-radius: 100px; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: none; white-space: nowrap; transition: opacity 0.2s; }
-    .btn-upgrade-inline:hover { opacity: 0.85; }
-    .upgrade-hint { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
     .beach-tab { padding: 0.5rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 100px; color: var(--muted); font-size: 0.85rem; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
     .beach-tab:hover { border-color: var(--accent); color: var(--text); }
     .beach-tab.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 500; }
-    .beach-tab.locked { opacity: 0.4; cursor: not-allowed; }
-    .beach-tab.locked::after { content: ' 🔒'; }
     .rating-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.9rem; font-weight: 500; margin-bottom: 2rem; }
     .rating-excelente { background: rgba(0,212,170,0.15); color: var(--good); border: 1px solid rgba(0,212,170,0.3); }
     .rating-bom       { background: rgba(0,153,255,0.15); color: var(--accent2); border: 1px solid rgba(0,153,255,0.3); }
@@ -117,11 +111,6 @@
     .loading { display: flex; align-items: center; justify-content: center; gap: 0.75rem; color: var(--muted); font-size: 0.9rem; padding: 3rem 0; }
     .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .premium-banner { background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(0,153,255,0.08)); border: 1px solid rgba(0,212,170,0.2); border-radius: 12px; padding: 2rem; text-align: center; margin-bottom: 2rem; }
-    .premium-banner h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-    .premium-banner p { color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem; }
-    .btn-premium { display: inline-block; padding: 0.7rem 1.5rem; background: var(--accent); color: #000; border-radius: 8px; font-weight: 500; text-decoration: none; font-size: 0.9rem; transition: opacity 0.2s; }
-    .btn-premium:hover { opacity: 0.85; }
     .btn-edit-beaches { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.9rem; background: transparent; border: 1px solid var(--border); border-radius: 100px; color: var(--muted); font-size: 0.8rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; margin-bottom: 2rem; }
     .btn-edit-beaches:hover { border-color: var(--accent); color: var(--text); }
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
@@ -199,13 +188,9 @@
       <div class="dash-greeting">OLÁ, <span id="dash-name">SURFISTA</span>!</div>
       <div class="dash-sub" id="dash-date"></div>
     </div>
-    <div id="btn-edit-beaches-wrap" style="display:none"><button class="btn-edit-beaches" onclick="openBeachModal()">✏️ Editar praias</button></div>
+    <div id="btn-edit-beaches-wrap"><button class="btn-edit-beaches" onclick="openBeachModal()">✏️ Editar praias</button></div>
     <div class="beach-tabs-row">
       <div class="beach-tabs" id="beach-tabs"></div>
-      <div class="upgrade-inline" id="upgrade-inline" style="display:none">
-        <a href="https://t.me/maraberto_bot" target="_blank" class="btn-upgrade-inline">⚡ Assinar Premium</a>
-        <span class="upgrade-hint">Ao clicar, vá ao Telegram e digite /upgrade</span>
-      </div>
     </div>
     <div id="forecast-content">
       <div class="loading"><div class="spinner"></div> Buscando condições...</div>
@@ -309,21 +294,14 @@ function showDashboard() {
 }
 
 function renderTabs() {
-  const container  = document.getElementById('beach-tabs');
-  const beaches    = state.user.beaches || [];
-  const isPremium  = state.user.isPremium;
-  const accessible = isPremium ? beaches : beaches.slice(0,1);
-  const locked     = isPremium ? [] : beaches.slice(1);
-  container.innerHTML = [
-    ...accessible.map(id => `<button class="beach-tab ${id===state.activeBeach?'active':''}" onclick="selectBeach('${id}')">${BEACH_NAMES[id]||id}</button>`),
-    ...locked.map(id     => `<button class="beach-tab locked" title="Premium necessário">${BEACH_NAMES[id]||id}</button>`),
-  ].join('');
-  if (!state.activeBeach) selectBeach(accessible[0]);
-  // Mostrar botão de upgrade só para usuários free
-  const upgradeEl = document.getElementById('upgrade-inline');
-  if (upgradeEl) upgradeEl.style.display = isPremium ? 'none' : 'flex';
+  const container = document.getElementById('beach-tabs');
+  const beaches   = state.user.beaches || [];
+  container.innerHTML = beaches
+    .map(id => `<button class="beach-tab ${id===state.activeBeach?'active':''}" onclick="selectBeach('${id}')">${BEACH_NAMES[id]||id}</button>`)
+    .join('');
+  if (!state.activeBeach) selectBeach(beaches[0]);
   const editWrap = document.getElementById('btn-edit-beaches-wrap');
-  if (editWrap) editWrap.style.display = isPremium ? 'block' : 'none';
+  if (editWrap) editWrap.style.display = 'block';
 }
 
 async function selectBeach(beachId) {
@@ -420,13 +398,6 @@ function renderForecast(data) {
       </div>
       <div class="chart-wrap"><canvas id="wind-chart"></canvas></div>
     </div>
-
-    ${!state.user.isPremium && (state.user.beaches?.length > 1) ? `
-    <div class="premium-banner">
-      <h3>🔒 ACESSO PREMIUM</h3>
-      <p>Você tem ${state.user.beaches.length} praias salvas. Desbloqueie todas por R$5/mês via PIX.</p>
-      <a href="https://t.me/maraberto_bot?start=premium" class="btn-premium" target="_blank">Assinar Premium →</a>
-    </div>` : ''}
 
     <div class="week-title">Previsão da semana</div>
     <div class="week-grid">
