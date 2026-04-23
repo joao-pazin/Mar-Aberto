@@ -74,21 +74,6 @@ export default async function handler(req, res) {
       case '/status':
         await handleStatus(chatId);
         break;
-      case '/upgrade':
-        await handleUpgrade(chatId);
-        break;
-      case '/comprovante':
-        await handleComprovante(chatId, firstName);
-        break;
-      case '/liberar': {
-        const adminId = process.env.ADMIN_CHAT_ID;
-        if (String(chatId) !== String(adminId)) {
-          await sendMessage(chatId, '❌ Comando não autorizado.');
-          break;
-        }
-        await handleLiberar(chatId, text.split(' ')[1]);
-        break;
-      }
       case '/parar':
         await removeSubscriber(chatId);
         await sendMessage(chatId, '😢 Você foi removido dos alertas. Use /start se quiser voltar!');
@@ -120,7 +105,7 @@ async function handleStart(chatId, firstName, payload) {
           return b ? `🏖️ ${b.name}` : id;
         }).join('\n');
         await sendMessage(chatId,
-          `🌊 *Bem-vindo ao Mar Aberto, ${existing.firstName || firstName}!*\n\nSua praia monitorada:\n${beachNames}\n\n⏰ Alertas às *06h* e *19h* todo dia.\n\n/previsao — ver previsão agora\n/ajuda — ver comandos`,
+          `🌊 *Bem-vindo ao Mar Aberto, ${existing.firstName || firstName}!*\n\nSuas praias monitoradas:\n${beachNames}\n\n⏰ Alertas às *06h* e *19h* todo dia.\n\n/previsao — ver previsão agora\n/praias — alterar praias\n/ajuda — ver comandos`,
           { parse_mode: 'Markdown' }
         );
         return;
@@ -135,32 +120,26 @@ async function handleStart(chatId, firstName, payload) {
       return b ? `🏖️ ${b.name}` : id;
     }).join('\n');
     await sendMessage(chatId,
-      `🌊 *Bem-vindo de volta, ${firstName}!*\n\nSua praia monitorada:\n${beachNames}\n\n⏰ Alertas às *06h* e *19h* todo dia.\n\n/previsao — ver previsão agora\n/praias — alterar praia\n/ajuda — ver comandos`,
+      `🌊 *Bem-vindo de volta, ${firstName}!*\n\nSuas praias monitoradas:\n${beachNames}\n\n⏰ Alertas às *06h* e *19h* todo dia.\n\n/previsao — ver previsão agora\n/praias — alterar praias\n/ajuda — ver comandos`,
       { parse_mode: 'Markdown' }
     );
     return;
   }
 
   await sendMessage(chatId,
-    `🌊 *Bem-vindo ao Mar Aberto, ${firstName}!*\n\nO mar chama. A gente avisa.\n\nEscolha sua praia:`,
+    `🌊 *Bem-vindo ao Mar Aberto, ${firstName}!*\n\nO mar chama. A gente avisa.\n\nEscolha suas praias:`,
     { parse_mode: 'Markdown' }
   );
   await handleSelectBeaches(chatId);
 }
 
 async function handleSelectBeaches(chatId) {
-  const { isPremium, FREE_BEACH_LIMIT } = await import('../lib/billing.js');
   const subscriber = await getSubscriber(chatId);
   const selectedBeaches = subscriber?.beaches || [];
-  const premium = subscriber ? isPremium(subscriber) : false;
 
   const buttons = BEACHES.map(beach => {
     const isSelected = selectedBeaches.includes(beach.id);
-    const isLocked = !premium && !isSelected && selectedBeaches.length >= FREE_BEACH_LIMIT;
-    let label;
-    if (isSelected) label = `✅ ${beach.name}`;
-    else if (isLocked) label = `🔒 ${beach.name}`;
-    else label = `🏖️ ${beach.name}`;
+    const label = isSelected ? `✅ ${beach.name}` : `🏖️ ${beach.name}`;
     return { text: label, callback_data: `toggle_${beach.id}` };
   });
 
@@ -168,24 +147,16 @@ async function handleSelectBeaches(chatId) {
   for (let i = 0; i < buttons.length; i += 2) keyboard.push(buttons.slice(i, i + 2));
   keyboard.push([{ text: '✅ Confirmar seleção', callback_data: 'confirm_beaches' }]);
 
-  const subtitle = premium ? '_(todas as praias desbloqueadas)_' : '_Plano gratuito: 1 praia. 🔒 = Premium_';
-  await sendMessage(chatId, `🏖️ *Selecione sua praia:*\n${subtitle}`, {
+  await sendMessage(chatId, `🏖️ *Selecione suas praias:*\n_Pode escolher quantas quiser — é tudo grátis._`, {
     parse_mode: 'Markdown',
     reply_markup: { inline_keyboard: keyboard }
   });
 }
 
 async function handleBeachToggle(chatId, beachId, messageId) {
-  const { isPremium, buildUpgradeMessage, FREE_BEACH_LIMIT } = await import('../lib/billing.js');
   const subscriber = await getSubscriber(chatId);
   let selectedBeaches = subscriber?.beaches || [];
   const isRemoving = selectedBeaches.includes(beachId);
-
-  if (!isRemoving && !isPremium(subscriber) && selectedBeaches.length >= FREE_BEACH_LIMIT) {
-    const beach = BEACHES.find(b => b.id === beachId);
-    await sendMessage(chatId, buildUpgradeMessage(beach?.name || beachId), { parse_mode: 'Markdown' });
-    return;
-  }
 
   if (isRemoving) selectedBeaches = selectedBeaches.filter(b => b !== beachId);
   else selectedBeaches.push(beachId);
@@ -193,14 +164,9 @@ async function handleBeachToggle(chatId, beachId, messageId) {
   await updateSubscriberBeaches(chatId, selectedBeaches);
 
   // Remontar o teclado com o novo estado e editar a mensagem
-  const premium = isPremium(subscriber);
   const buttons = BEACHES.map(beach => {
     const isSelected = selectedBeaches.includes(beach.id);
-    const isLocked = !premium && !isSelected && selectedBeaches.length >= FREE_BEACH_LIMIT;
-    let label;
-    if (isSelected) label = `✅ ${beach.name}`;
-    else if (isLocked) label = `🔒 ${beach.name}`;
-    else label = `🏖️ ${beach.name}`;
+    const label = isSelected ? `✅ ${beach.name}` : `🏖️ ${beach.name}`;
     return { text: label, callback_data: `toggle_${beach.id}` };
   });
   const keyboard = [];
@@ -222,7 +188,7 @@ async function handleConfirmBeaches(chatId, firstName) {
   await addSubscriber(chatId, selectedBeaches, firstName);
   const beachNames = selectedBeaches.map(id => BEACHES.find(b => b.id === id)?.name).filter(Boolean).join(', ');
   await sendMessage(chatId,
-    `✅ *Perfeito!* Sua praia monitorada: *${beachNames}*\n\n⏰ Alertas às *06h* e *19h* todo dia.\n\n/previsao — ver previsão agora`,
+    `✅ *Perfeito!* Praias monitoradas: *${beachNames}*\n\n⏰ Alertas às *06h* e *19h* todo dia.\n\n/previsao — ver previsão agora`,
     { parse_mode: 'Markdown' }
   );
 }
@@ -269,59 +235,28 @@ async function handleForecastRequest(chatId, beachId, type) {
 }
 
 async function handleStatus(chatId) {
-  const { buildStatusMessage } = await import('../lib/billing.js');
   const subscriber = await getSubscriber(chatId);
   if (!subscriber) {
     await sendMessage(chatId, '⚠️ Você ainda não está cadastrado. Use /start.');
     return;
   }
-  await sendMessage(chatId, buildStatusMessage(subscriber), { parse_mode: 'Markdown' });
-}
 
-async function handleComprovante(chatId, firstName) {
-  const ADMIN_ID = process.env.ADMIN_CHAT_ID;
-  await sendMessage(chatId, `✅ *Comprovante recebido!*\n\nVamos verificar e liberar em breve.`, { parse_mode: 'Markdown' });
-  if (ADMIN_ID) {
-    await sendMessage(ADMIN_ID,
-      `💰 *Novo comprovante!*\n👤 ${firstName}\n🆔 ${chatId}\n\n/liberar ${chatId}`,
-      { parse_mode: 'Markdown' }
-    );
-  }
-}
+  const beaches = subscriber.beaches || [];
+  const beachNames = beaches
+    .map(id => BEACHES.find(b => b.id === id)?.name)
+    .filter(Boolean)
+    .map(n => `🏖️ ${n}`)
+    .join('\n') || '—';
 
-async function handleLiberar(adminChatId, query) {
-  if (!query) {
-    await sendMessage(adminChatId, '⚠️ Use: /liberar <chatId ou email>');
-    return;
-  }
-  const { findSubscriberByEmailOrId, grantAccess } = await import('../lib/sheets.js');
-  const subscriber = await findSubscriberByEmailOrId(query);
-  if (!subscriber?.chatId) {
-    await sendMessage(adminChatId, `❌ Não encontrado: ${query}`);
-    return;
-  }
-  await grantAccess(subscriber.chatId);
-  await sendMessage(adminChatId, `✅ Acesso liberado para ${subscriber.firstName} (${subscriber.chatId})`);
-  await sendMessage(subscriber.chatId, `🎉 *Pagamento confirmado!*\n\nSeu acesso Premium foi ativado por 30 dias. 🌊\n\nAgora selecione as praias que quer monitorar:`, { parse_mode: 'Markdown' });
-  await handleSelectBeaches(subscriber.chatId);
-}
-
-async function handleUpgrade(chatId) {
-  const { isPremium, buildFullUpgradeMessage } = await import('../lib/billing.js');
-  const subscriber = await getSubscriber(chatId);
-
-  if (subscriber && isPremium(subscriber)) {
-    const until = new Date(subscriber.paidUntil).toLocaleDateString('pt-BR');
-    await sendMessage(chatId, `✅ *Você já é Premium!*\n\nSeu acesso está ativo até *${until}*. 🌊`, { parse_mode: 'Markdown' });
-    return;
-  }
-
-  await sendMessage(chatId, buildFullUpgradeMessage(), { parse_mode: 'Markdown' });
+  await sendMessage(chatId,
+    `🌊 *Seu cadastro*\n\nPraias monitoradas (${beaches.length}):\n${beachNames}\n\n⏰ Alertas às *06h* e *19h*\n\n/praias — alterar praias\n/parar — cancelar alertas`,
+    { parse_mode: 'Markdown' }
+  );
 }
 
 async function handleHelp(chatId) {
   await sendMessage(chatId,
-    `🌊 *Mar Aberto — Comandos*\n\n/previsao — previsão de hoje\n/semana — previsão da semana\n/praias — alterar praia monitorada\n/status — ver plano\n/upgrade — assinar Premium\n/comprovante — enviar comprovante PIX\n/parar — cancelar alertas\n/ajuda — esta mensagem\n\n⏰ Alertas automáticos às *06h* e *19h*`,
+    `🌊 *Mar Aberto — Comandos*\n\n/previsao — previsão de hoje\n/semana — previsão da semana\n/praias — alterar praias monitoradas\n/status — ver suas praias\n/parar — cancelar alertas\n/ajuda — esta mensagem\n\n⏰ Alertas automáticos às *06h* e *19h*\n\n100% grátis. Sempre.`,
     { parse_mode: 'Markdown' }
   );
 }
