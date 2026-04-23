@@ -639,7 +639,7 @@
 
 <!-- ── HERO ─────────────────────────────────────────────────── -->
 <section class="hero">
-  <div class="hero-tag">1 praia grátis · Todas as praias por R$7,90/mês</div>
+  <div class="hero-tag">100% grátis · Todas as praias · Sem cadastro complicado</div>
   <h1>O MAR CHAMA.<br>A GENTE <em>AVISA.</em></h1>
   <p>Previsão de ondas, vento e tempo para as praias do Rio de Janeiro, Florianópolis e Litoral Norte de SP. No seu Telegram todo dia — e no dashboard quando quiser consultar.</p>
   <div class="hero-cta">
@@ -680,20 +680,20 @@
 <!-- ── STATS ─────────────────────────────────────────────────── -->
 <div class="stats">
   <div class="stat">
-    <div class="stat-num">1</div>
-    <div class="stat-label">Praia no plano grátis</div>
+    <div class="stat-num">17</div>
+    <div class="stat-label">Praias monitoradas</div>
   </div>
   <div class="stat">
-    <div class="stat-num">17</div>
-    <div class="stat-label">Praias no Premium</div>
+    <div class="stat-num">3</div>
+    <div class="stat-label">Estados cobertos</div>
   </div>
   <div class="stat">
     <div class="stat-num">2×</div>
     <div class="stat-label">Alertas por dia</div>
   </div>
   <div class="stat">
-    <div class="stat-num">R$7,90</div>
-    <div class="stat-label">Por mês (Premium)</div>
+    <div class="stat-num">R$0</div>
+    <div class="stat-label">Sempre grátis</div>
   </div>
 </div>
 
@@ -879,8 +879,8 @@
 <section id="cadastro">
   <div class="container">
     <div class="section-tag">// Cadastro</div>
-    <h2 class="section-title">Grátis pra começar.</h2>
-    <p class="section-sub">Escolha 1 praia agora. Quer todas as 17? R$7,90/mês.</p>
+    <h2 class="section-title">Grátis. Sempre.</h2>
+    <p class="section-sub">Escolha todas as praias que quiser monitorar. Sem cobrança, sem pegadinha.</p>
 
     <div class="signup-grid">
       <!-- FORMULÁRIO -->
@@ -896,7 +896,7 @@
           </div>
 
           <div class="form-group">
-            <label>Sua praia <span style="color:var(--muted);font-weight:300;text-transform:none">(escolha 1 — grátis)</span></label>
+            <label>Suas praias <span style="color:var(--muted);font-weight:300;text-transform:none">(escolha quantas quiser)</span></label>
 
             <p style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin:0.75rem 0 0.4rem">Rio de Janeiro</p>
             <div class="form-beaches" id="beach-checkboxes-rj"></div>
@@ -907,7 +907,7 @@
             <p style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin:1rem 0 0.4rem">Litoral Norte SP</p>
             <div class="form-beaches" id="beach-checkboxes-sp"></div>
 
-            <p style="font-size:0.78rem;color:var(--muted);margin-top:0.6rem">🔒 Quer todas as 17 praias? Assine Premium por R$5/mês após o cadastro.</p>
+            <p style="font-size:0.78rem;color:var(--muted);margin-top:0.6rem">🌊 Todas as praias desbloqueadas. Monitore quantas quiser.</p>
           </div>
 
           <button class="btn-submit" id="btn-cadastrar" onclick="handleSignup()">
@@ -1047,24 +1047,14 @@
   }
 
   function toggleSignupBeach(id, el) {
-    // Free: só 1 praia — desmarca a anterior antes de marcar nova
-    if (!el.classList.contains('checked')) {
-      // Desmarca todas as outras
-      document.querySelectorAll('.check-beach.checked').forEach(other => {
-        other.classList.remove('checked');
-        other.querySelector('.check-box').innerHTML = '';
-      });
-      state.selectedBeaches = [];
-    }
-
     el.classList.toggle('checked');
     const box = document.getElementById(`cbbox-${id}`);
     if (el.classList.contains('checked')) {
       box.innerHTML = '✓';
-      state.selectedBeaches = [id];
+      if (!state.selectedBeaches.includes(id)) state.selectedBeaches.push(id);
     } else {
       box.innerHTML = '';
-      state.selectedBeaches = [];
+      state.selectedBeaches = state.selectedBeaches.filter(b => b !== id);
     }
   }
 
