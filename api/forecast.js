@@ -70,14 +70,6 @@ export default async function handler(req) {
 
   if (!beachId || !BEACHES[beachId]) return json({ error: 'Praia inválida' }, 400);
 
-  const userBeaches = payload.beaches || [];
-  const isPremium   = payload.isPremium;
-  const freeBeach   = userBeaches[0];
-
-  if (!isPremium && beachId !== freeBeach) {
-    return json({ error: 'Acesso premium necessário para esta praia.' }, 403);
-  }
-
   const beach = BEACHES[beachId];
 
   const MARINE_VARS  = 'wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period,sea_surface_temperature';
