@@ -51,6 +51,15 @@
       letter-spacing: 0.05em;
       color: var(--text);
       text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .nav-logo img {
+      width: 32px;
+      height: 32px;
+      display: block;
     }
 
     .nav-logo span { color: var(--accent); }
@@ -592,7 +601,9 @@
     .footer-logo {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 2rem; margin-bottom: 0.5rem;
+      display: inline-flex; align-items: center; gap: 0.6rem;
     }
+    .footer-logo img { width: 40px; height: 40px; display: block; }
     .footer-logo span { color: var(--accent); }
 
     /* ── SUCCESS STATE ──────────────────────────────────────── */
@@ -628,7 +639,7 @@
 
 <!-- ── NAV ──────────────────────────────────────────────────── -->
 <nav>
-  <a class="nav-logo" href="#"><span>〜</span> MAR ABERTO</a>
+  <a class="nav-logo" href="#"><img src="/logo.png" alt="Mar Aberto"> MAR ABERTO</a>
   <div class="nav-links">
     <a href="#como-funciona">Como funciona</a>
     <a href="#praias">Praias</a>
@@ -639,7 +650,7 @@
 
 <!-- ── HERO ─────────────────────────────────────────────────── -->
 <section class="hero">
-  <div class="hero-tag">100% grátis · Todas as praias · Sem cadastro complicado</div>
+  <div class="hero-tag">100% grátis · Todas as praias</div>
   <h1>O MAR CHAMA.<br>A GENTE <em>AVISA.</em></h1>
   <p>Previsão de ondas, vento e tempo para as praias do Rio de Janeiro, Florianópolis e Litoral Norte de SP. No seu Telegram todo dia — e no dashboard quando quiser consultar.</p>
   <div class="hero-cta">
@@ -879,7 +890,7 @@
 <section id="cadastro">
   <div class="container">
     <div class="section-tag">// Cadastro</div>
-    <h2 class="section-title">Grátis. Sempre.</h2>
+    <h2 class="section-title">Grátis.</h2>
     <p class="section-sub">Escolha todas as praias que quiser monitorar. Sem cobrança, sem pegadinha.</p>
 
     <div class="signup-grid">
@@ -966,7 +977,7 @@
 
 <!-- ── FOOTER ─────────────────────────────────────────────────── -->
 <footer>
-  <div class="footer-logo"><span>〜</span> MAR ABERTO</div>
+  <div class="footer-logo"><img src="/logo.png" alt="Mar Aberto"> MAR ABERTO</div>
   <p>O mar chama. A gente avisa.</p>
   <p class="mt-2">
     Dados: <a href="https://open-meteo.com" target="_blank">Open-Meteo</a> ·
