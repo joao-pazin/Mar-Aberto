@@ -86,18 +86,12 @@ export default async function handler(req) {
     redirect: 'follow',
   }).catch(() => null);
 
-  // 5. Verifica se é premium
-  const isPremium = subscriber.paidUntil
-    ? new Date(subscriber.paidUntil) > new Date()
-    : false;
-
-  // 6. Gera JWT (válido 30 dias)
+  // 5. Gera JWT (válido 30 dias)
   const token = await signJWT({
     email: emailClean,
     chatId: subscriber.chatId,
     firstName: subscriber.firstName,
     beaches: subscriber.beaches,
-    isPremium,
   });
 
   return json({
@@ -107,7 +101,6 @@ export default async function handler(req) {
       email: emailClean,
       firstName: subscriber.firstName,
       beaches: subscriber.beaches,
-      isPremium,
     },
   });
 }
