@@ -1,9 +1,8 @@
 import { fetchAllBeaches } from '../lib/openmeteo.js';
-import { sendScheduledAlert, sendMessage } from '../lib/telegram.js';
+import { sendScheduledAlert } from '../lib/telegram.js';
 import { getSubscribers } from '../lib/sheets.js';
-import { getAccessibleBeaches } from '../lib/billing.js';
 
-export const config = { runtime: 'edge' };
+export const config = { runtime: 'nodejs' };
 
 export default async function handler(req) {
   const authHeader = req.headers.get('authorization');
@@ -23,12 +22,9 @@ export default async function handler(req) {
 
     for (const subscriber of subscribers) {
       try {
-        // Filtra praias pelo plano (1 se free, todas se premium)
-        const accessibleBeaches = getAccessibleBeaches(subscriber);
-        if (accessibleBeaches.length === 0) continue;
+        if (!subscriber.beaches || subscriber.beaches.length === 0) continue;
 
-        const filteredSubscriber = { ...subscriber, beaches: accessibleBeaches };
-        await sendScheduledAlert(filteredSubscriber, beachData, 'morning');
+        await sendScheduledAlert(subscriber, beachData, 'morning');
         successCount++;
         await new Promise(r => setTimeout(r, 100));
       } catch (err) {
