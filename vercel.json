@@ -13,12 +13,6 @@
     }
   ],
   "functions": {
-    "api/cron-manha.js": {
-      "maxDuration": 60
-    },
-    "api/cron-noite.js": {
-      "maxDuration": 60
-    },
     "api/webhook.js": {
       "maxDuration": 60
     },
