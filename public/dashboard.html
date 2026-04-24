@@ -626,7 +626,7 @@ function selectDay(el, index) {
 }
 
 // ── RATING ────────────────────────────────────────────────────────────────────
-function dirToDegs(d) { return {N:0,NE:45,L:90,SE:135,S:180,SO:225,O:270,NO:315}[d]??null; }
+function dirToDegs(d) { return {N:0,NE:45,L:90,E:90,SE:135,S:180,SO:225,SW:225,O:270,W:270,NO:315,NW:315}[d]??null; }
 function swellScore(swellDeg, facing, period=0) {
   if (swellDeg==null||!facing) return 1;
   const fd=dirToDegs(facing); if(fd==null) return 1;
