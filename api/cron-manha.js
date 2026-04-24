@@ -2,7 +2,7 @@ import { fetchAllBeaches } from '../lib/openmeteo.js';
 import { sendScheduledAlert } from '../lib/telegram.js';
 import { getSubscribers } from '../lib/sheets.js';
 
-export const config = { runtime: 'nodejs' };
+export const config = { runtime: 'nodejs', maxDuration: 60 };
 
 export default async function handler(req) {
   const authHeader = req.headers.get('authorization');
