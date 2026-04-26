@@ -35,22 +35,22 @@ async function verifyJWT(token) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BEACHES = {
-  copacabana:     { lat: -22.9711, lon: -43.1823, name: 'Copacabana',     zone: 'Zona Sul',      facing: 'SE' },
-  ipanema:        { lat: -22.9838, lon: -43.2096, name: 'Ipanema',         zone: 'Zona Sul',      facing: 'S'  },
-  leblon:         { lat: -22.9874, lon: -43.2248, name: 'Leblon',          zone: 'Zona Sul',      facing: 'S'  },
-  sao_conrado:    { lat: -23.0101, lon: -43.2791, name: 'São Conrado',     zone: 'Zona Sul',      facing: 'S'  },
-  barra:          { lat: -23.0093, lon: -43.3654, name: 'Barra da Tijuca', zone: 'Zona Oeste',    facing: 'S'  },
-  recreio:        { lat: -23.0178, lon: -43.4711, name: 'Recreio',         zone: 'Zona Oeste',    facing: 'SW' },
-  macumba:        { lat: -23.0228, lon: -43.5021, name: 'Macumba',         zone: 'Zona Oeste',    facing: 'SW' },
-  prainha:        { lat: -23.0367, lon: -43.5178, name: 'Prainha',         zone: 'Zona Oeste',    facing: 'W'  },
-  grumari:        { lat: -23.0447, lon: -43.5347, name: 'Grumari',         zone: 'Zona Oeste',    facing: 'W'  },
-  joaquina:       { lat: -27.6353, lon: -48.4612, name: 'Joaquina',        zone: 'Floripa',       facing: 'L'  },
-  praia_mole:     { lat: -27.6034, lon: -48.4370, name: 'Praia Mole',      zone: 'Floripa',       facing: 'L'  },
-  barra_da_lagoa: { lat: -27.5726, lon: -48.4277, name: 'Barra da Lagoa',  zone: 'Floripa',       facing: 'NE' },
-  campeche:       { lat: -27.6898, lon: -48.4816, name: 'Campeche',        zone: 'Floripa',       facing: 'SE' },
-  itamambuca:     { lat: -23.3544, lon: -44.8321, name: 'Itamambuca',      zone: 'Ubatuba',       facing: 'SE' },
-  prumirim:       { lat: -23.3880, lon: -44.8654, name: 'Prumirim',        zone: 'Ubatuba',       facing: 'SE' },
-  maresias:       { lat: -23.8019, lon: -45.5564, name: 'Maresias',        zone: 'São Sebastião', facing: 'SE' },
+  copacabana:     { lat: -22.9711, lon: -43.1823, name: 'Copacabana',     zone: 'Zona Sul',      facing: 'SE', idealRange: [1.5, 1.8, 2.2, 3.0] },
+  ipanema:        { lat: -22.9838, lon: -43.2096, name: 'Ipanema',         zone: 'Zona Sul',      facing: 'S',  idealRange: [0.9, 1.3, 1.7, 2.2] },
+  leblon:         { lat: -22.9874, lon: -43.2248, name: 'Leblon',          zone: 'Zona Sul',      facing: 'S',  idealRange: [0.9, 1.3, 1.7, 2.2] },
+  sao_conrado:    { lat: -23.0101, lon: -43.2791, name: 'São Conrado',     zone: 'Zona Sul',      facing: 'S',  idealRange: [0.9, 1.2, 1.9, 2.5] },
+  barra:          { lat: -23.0093, lon: -43.3654, name: 'Barra da Tijuca', zone: 'Zona Oeste',    facing: 'S',  idealRange: [0.9, 1.2, 1.8, 2.8] },
+  recreio:        { lat: -23.0178, lon: -43.4711, name: 'Recreio',         zone: 'Zona Oeste',    facing: 'SW', idealRange: [0.9, 1.2, 1.8, 2.8] },
+  macumba:        { lat: -23.0228, lon: -43.5021, name: 'Macumba',         zone: 'Zona Oeste',    facing: 'SW', idealRange: [0.8, 1.5, 2.5, 3.0] },
+  prainha:        { lat: -23.0367, lon: -43.5178, name: 'Prainha',         zone: 'Zona Oeste',    facing: 'W',  idealRange: [0.8, 1.2, 2.0, 3.5] },
+  grumari:        { lat: -23.0447, lon: -43.5347, name: 'Grumari',         zone: 'Zona Oeste',    facing: 'W',  idealRange: [0.8, 1.2, 2.5, 3.5] },
+  joaquina:       { lat: -27.6353, lon: -48.4612, name: 'Joaquina',        zone: 'Floripa',       facing: 'E',  idealRange: [0.8, 1.2, 2.2, 3.0] },
+  praia_mole:     { lat: -27.6034, lon: -48.4370, name: 'Praia Mole',      zone: 'Floripa',       facing: 'E',  idealRange: [0.8, 1.2, 2.0, 2.8] },
+  barra_da_lagoa: { lat: -27.5726, lon: -48.4277, name: 'Barra da Lagoa',  zone: 'Floripa',       facing: 'NE', idealRange: [0.8, 1.2, 1.8, 2.2] },
+  campeche:       { lat: -27.6898, lon: -48.4816, name: 'Campeche',        zone: 'Floripa',       facing: 'SE', idealRange: [0.8, 1.2, 1.8, 2.5] },
+  itamambuca:     { lat: -23.3544, lon: -44.8321, name: 'Itamambuca',      zone: 'Ubatuba',       facing: 'SE', idealRange: [0.8, 1.2, 2.2, 3.0] },
+  prumirim:       { lat: -23.3880, lon: -44.8654, name: 'Prumirim',        zone: 'Ubatuba',       facing: 'SE', idealRange: [0.8, 1.2, 2.0, 2.8] },
+  maresias:       { lat: -23.8019, lon: -45.5564, name: 'Maresias',        zone: 'São Sebastião', facing: 'SE', idealRange: [0.8, 1.2, 1.8, 2.5] },
 };
 
 export default async function handler(req) {
