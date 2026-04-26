@@ -626,121 +626,166 @@ function selectDay(el, index) {
 }
 
 // ── RATING ────────────────────────────────────────────────────────────────────
-function dirToDegs(d) { return {N:0,NE:45,L:90,E:90,SE:135,S:180,SO:225,SW:225,O:270,W:270,NO:315,NW:315}[d]??null; }
-function swellScore(swellDeg, facing, period=0) {
-  if (swellDeg==null||!facing) return 1;
-  const fd=dirToDegs(facing); if(fd==null) return 1;
-  let diff=Math.abs(swellDeg-fd); if(diff>180) diff=360-diff;
-  let s=diff<=22.5?3:diff<=45?2:diff<=67.5?1:diff<=90?0:-1;
-  if(s===3&&period<12) s=2; return s;
+function dirToDegs(dir) {
+  if (!dir) return null;
+  const map = { N:0, NE:45, L:90, E:90, SE:135, S:180, SO:225, SW:225, O:270, W:270, NO:315, NW:315 };
+  return map[String(dir).toUpperCase()] ?? null;
 }
-function windScore(speed, wDeg, facing) {
-  if(wDeg==null||!facing){ return speed<10?2:speed<20?1:speed<30?0:speed>=40?-2:-1; }
-  const fd=dirToDegs(facing); if(fd==null) return speed<10?2:speed<20?1:0;
-  let diff=Math.abs(wDeg-fd); if(diff>180) diff=360-diff;
-  if(diff>=135) return speed<10?3:speed<20?2:speed<30?1:0;
-  if(diff<=45)  return speed<10?0:speed<20?-1:speed<30?-2:-3;
-  return speed<15?1:speed<25?0:speed<35?-1:-2;
+function validNum(v) {
+  if (v === null || v === undefined) return null;
+  const n = Number(v); return Number.isFinite(n) ? n : null;
+}
+function degreesToDir(deg) {
+  const d = validNum(deg); if (d === null) return '—';
+  return ['N','NE','L','SE','S','SO','O','NO'][Math.round(d/45)%8];
+}
+function waveHeightScore(waveH, beach) {
+  const range = beach?.idealRange || [0.5, 0.8, 2.0, 3.0];
+  const [min, magicMin, magicMax, danger] = range;
+  if (waveH < min) return 0;
+  if (waveH < magicMin) return 3 * (waveH - min) / (magicMin - min);
+  if (waveH <= magicMax) return 3;
+  if (waveH <= danger) return 3 - 2 * (waveH - magicMax) / (danger - magicMax);
+  return -1;
+}
+function swellAlignmentScore(swellDir, facing, swellPeriod = 0) {
+  if (swellDir === null || swellDir === undefined) return 1;
+  if (!facing) return 1;
+  const facingDeg = dirToDegs(facing); if (facingDeg === null) return 1;
+  let diff = Math.abs(swellDir - facingDeg); if (diff > 180) diff = 360 - diff;
+  let s = diff<=22.5?3 : diff<=45?2 : diff<=67.5?1 : diff<=90?0 : -1;
+  if (s === 3 && swellPeriod < 12) s = 2;
+  return s;
+}
+function periodMultiplier(period) {
+  if (period >= 14) return 1.3; if (period >= 12) return 1.15;
+  if (period >= 10) return 1.0; if (period >= 8)  return 0.85;
+  if (period >= 6)  return 0.6; return 0.4;
+}
+function classifyWind(wind, windDir, facing) {
+  if (wind < 6) return { label:'sem_vento', intensity:null };
+  const facingDeg = facing ? dirToDegs(facing) : null;
+  if (windDir === null || windDir === undefined || facingDeg === null) {
+    if (wind < 10) return { label:'lateral', intensity:'fraco' };
+    if (wind < 20) return { label:'lateral', intensity:'moderado' };
+    return { label:'lateral', intensity:'forte' };
+  }
+  let diff = Math.abs(windDir - facingDeg); if (diff > 180) diff = 360 - diff;
+  let label = diff >= 135 ? 'offshore' : diff <= 45 ? 'onshore' : 'lateral';
+  let intensity = wind < 10 ? 'leve' : wind < 20 ? 'moderado' : wind < 30 ? 'forte' : 'violento';
+  if (label !== 'offshore' && intensity === 'leve') intensity = 'fraco';
+  return { label, intensity };
+}
+function windMultiplier(wind, windDir, facing) {
+  const w = classifyWind(wind, windDir, facing);
+  if (w.label === 'offshore') {
+    if (w.intensity === 'leve')     return 1.2;
+    if (w.intensity === 'moderado') return 1.1;
+    if (w.intensity === 'forte')    return 1.0;
+    return 0.9;
+  }
+  if (w.label === 'sem_vento') return 1.0;
+  if (w.label === 'lateral') {
+    if (w.intensity === 'fraco')    return 0.9;
+    if (w.intensity === 'moderado') return 0.75;
+    return 0.5;
+  }
+  if (w.intensity === 'fraco')    return 0.7;
+  if (w.intensity === 'moderado') return 0.45;
+  if (w.intensity === 'forte')    return 0.25;
+  return 0.1;
 }
 function getRating(day, beach) {
-  const waveH=day.waveHeight?.avg||0, period=day.wavePeriod?.avg||0;
-  const wind=day.windSpeed?.avg||0, windDir=day.windDirection??null;
-  const rain=day.precipitation||0, swellDir=day.swellDirection??null;
-  const swellP=day.swellPeriod?.avg||0;
-  let s=0;
-  if(waveH>=0.8&&waveH<=2.5) s+=3; else if(waveH>=0.5) s+=1; else if(waveH>2.5&&waveH<=4) s+=2; else if(waveH>4) s-=1;
-  s+=period>=14?3:period>=12?2:period>=9?1:0;
-  s+=swellScore(swellDir,beach?.facing,swellP);
-  s+=windScore(wind,windDir,beach?.facing);
-  if(rain>10) s-=3; else if(rain>5) s-=2; else if(rain>1) s-=1;
-  const big=waveH>2.5;
-  if(!big&&s>=11) return {emoji:'🔥',label:'Excelente'};
-  if(s>=8)        return {emoji:'✅',label:'Bom'};
-  if(s>=4)        return {emoji:'😐',label:'Regular'};
-  if(s>=2)        return {emoji:'😞',label:'Fraco'};
-  return          {emoji:'⛔',label:'Péssimo'};
+  const waveH  = day.waveHeight?.avg  || 0;
+  const period = day.wavePeriod?.avg  || 0;
+  const wind   = day.windSpeed?.avg   || 0;
+  const windDir  = validNum(day.windDirection);
+  const rain   = day.precipitation    || 0;
+  const swellDir = validNum(day.swellDirection) ?? validNum(day.waveDirection);
+  const swellPeriod = day.swellPeriod?.avg || day.wavePeriod?.avg || 0;
+
+  const heightScore = waveHeightScore(waveH, beach);
+  const alignScore  = swellAlignmentScore(swellDir, beach?.facing, swellPeriod);
+  const scoreBase   = heightScore + alignScore;
+
+  const pMult = periodMultiplier(period);
+  const wMult = windMultiplier(wind, windDir, beach?.facing);
+
+  let chuvaPenalty = 0;
+  if (rain > 10) chuvaPenalty = 1; else if (rain > 5) chuvaPenalty = 0.5;
+
+  const ePMult = scoreBase <= 0 ? Math.min(pMult, 1.0) : pMult;
+  const eWMult = scoreBase <= 0 ? Math.min(wMult, 1.0) : wMult;
+
+  const score = (scoreBase * ePMult * eWMult) - chuvaPenalty;
+
+  if (score >= 5.5) return { emoji:'🔥', label:'Excelente', score };
+  if (score >= 3.8) return { emoji:'✅', label:'Bom',       score };
+  if (score >= 2.3) return { emoji:'😐', label:'Regular',   score };
+  if (score >= 1.0) return { emoji:'😞', label:'Fraco',     score };
+  return               { emoji:'⛔', label:'Péssimo',   score };
 }
 
 // ── RATING DESCRIPTION ───────────────────────────────────────────────────────
-function degreesToDir(deg) {
-  if (deg == null) return '—';
-  const dirs = ['N','NE','L','SE','S','SO','O','NO'];
-  return dirs[Math.round(deg / 45) % 8];
-}
 function getRatingDescription(day, beach = null) {
   const waveH   = day.waveHeight?.avg  || 0;
-  const waveMax = day.waveHeight?.max  || 0;
   const period  = day.wavePeriod?.avg  || 0;
   const wind    = day.windSpeed?.avg   || 0;
-  const windDir = day.windDirection    ?? null;
+  const windDir = validNum(day.windDirection);
   const rain    = day.precipitation    || 0;
-  const swellDir = day.swellDirection  ?? null;
-  const fmt = v => (v == null || isNaN(v)) ? '—' : Number(v).toFixed(1);
+  const swellDir = validNum(day.swellDirection) ?? validNum(day.waveDirection);
+  const fmtV = v => (v == null || isNaN(v)) ? '—' : Number(v).toFixed(1);
   const parts = [];
 
-  // Onda
-  if (waveH >= 0.8 && waveH <= 2.5) {
-    const adj = waveH >= 1.8 ? 'com bom tamanho' : waveH >= 1.2 ? 'de tamanho ideal' : 'pequenas mas surfáveis';
-    parts.push(`Ondas ${adj} (${fmt(waveH)}m)`);
-  } else if (waveH > 2.5 && waveH <= 4) {
-    parts.push(`Mar grande (${fmt(waveH)}m, pico até ${fmt(waveMax)}m) — recomendado para surfistas experientes`);
-  } else if (waveH > 4) {
-    parts.push(`Mar muito grande (${fmt(waveH)}m) — perigoso para a maioria`);
+  if (beach?.idealRange) {
+    const [min, magicMin, magicMax, danger] = beach.idealRange;
+    if (waveH < min)            parts.push(`Mar muito pequeno pra ${beach.name||'esta praia'} (${fmtV(waveH)}m)`);
+    else if (waveH < magicMin)  parts.push(`Ondas menores que o ideal (${fmtV(waveH)}m)`);
+    else if (waveH <= magicMax) parts.push(`Ondas em tamanho ideal (${fmtV(waveH)}m)`);
+    else if (waveH <= danger)   parts.push(`Mar grande (${fmtV(waveH)}m) — pra surfistas experientes`);
+    else                        parts.push(`Mar muito grande (${fmtV(waveH)}m) — perigoso`);
   } else {
-    parts.push(`Ondas fracas (${fmt(waveH)}m)`);
+    parts.push(`Ondas de ${fmtV(waveH)}m`);
   }
 
-  // Período
-  if (period >= 14)      parts.push(`período longo de ${fmt(period)}s traz potência e organização`);
-  else if (period >= 12) parts.push(`período de ${fmt(period)}s garante ondas organizadas`);
-  else if (period >= 9)  parts.push(`período moderado de ${fmt(period)}s`);
-  else                   parts.push(`período curto (${fmt(period)}s) — marolinha bagunçada`);
+  if (period >= 14)      parts.push(`período longo (${fmtV(period)}s) traz potência`);
+  else if (period >= 12) parts.push(`período de ${fmtV(period)}s garante ondas organizadas`);
+  else if (period >= 10) parts.push(`período moderado (${fmtV(period)}s)`);
+  else if (period >= 8)  parts.push(`período curto (${fmtV(period)}s) — onda fraca`);
+  else                   parts.push(`período muito curto (${fmtV(period)}s) — marola`);
 
-  // Alinhamento do swell
-  if (swellDir != null && beach?.facing) {
+  if (swellDir !== null && beach?.facing) {
     const fd = dirToDegs(beach.facing);
-    if (fd != null) {
-      let diff = Math.abs(swellDir - fd);
-      if (diff > 180) diff = 360 - diff;
-      const label = degreesToDir(swellDir);
-      if (diff <= 22.5)    parts.push(`swell ${label} chegando direto na praia`);
-      else if (diff <= 45) parts.push(`swell ${label} em ângulo favorável`);
-      else if (diff <= 90) parts.push(`swell ${label} chegando de lado`);
-      else                 parts.push(`swell ${label} desfavorável para esta praia`);
+    if (fd !== null) {
+      let diff = Math.abs(swellDir - fd); if (diff > 180) diff = 360 - diff;
+      const sl = degreesToDir(swellDir);
+      if (diff <= 22.5)      parts.push(`swell ${sl} direto na praia`);
+      else if (diff <= 45)   parts.push(`swell ${sl} em ângulo favorável`);
+      else if (diff <= 90)   parts.push(`swell ${sl} chegando de lado`);
+      else                   parts.push(`swell ${sl} desfavorável`);
     }
   }
 
-  // Vento
-  if (windDir != null && beach?.facing) {
-    const fd = dirToDegs(beach.facing);
-    if (fd != null) {
-      let diff = Math.abs(windDir - fd);
-      if (diff > 180) diff = 360 - diff;
-      const isOffshore = diff >= 135, isOnshore = diff <= 45;
-      if (isOffshore) {
-        if (wind < 10)      parts.push(`vento offshore leve (${fmt(wind)} km/h) — condições perfeitas`);
-        else if (wind < 20) parts.push(`vento offshore moderado (${fmt(wind)} km/h) favorece as ondas`);
-        else                parts.push(`vento offshore forte (${fmt(wind)} km/h)`);
-      } else if (isOnshore) {
-        if (wind < 10)      parts.push(`vento onshore fraco (${fmt(wind)} km/h)`);
-        else if (wind < 20) parts.push(`vento onshore (${fmt(wind)} km/h) atrapalha um pouco`);
-        else                parts.push(`vento onshore forte (${fmt(wind)} km/h) prejudica as condições`);
-      } else {
-        if (wind < 15)      parts.push(`vento lateral fraco (${fmt(wind)} km/h)`);
-        else                parts.push(`vento lateral de ${fmt(wind)} km/h`);
-      }
-    }
+  const w = classifyWind(wind, windDir, beach?.facing);
+  if (w.label === 'sem_vento') {
+    parts.push(`sem vento`);
+  } else if (w.label === 'offshore') {
+    if (w.intensity === 'leve')     parts.push(`vento offshore leve (${fmtV(wind)} km/h)`);
+    else if (w.intensity === 'moderado') parts.push(`vento offshore (${fmtV(wind)} km/h)`);
+    else parts.push(`vento offshore forte (${fmtV(wind)} km/h)`);
+  } else if (w.label === 'onshore') {
+    if (w.intensity === 'fraco')    parts.push(`vento onshore fraco (${fmtV(wind)} km/h)`);
+    else if (w.intensity === 'moderado') parts.push(`vento onshore (${fmtV(wind)} km/h) atrapalha`);
+    else if (w.intensity === 'forte') parts.push(`vento onshore forte (${fmtV(wind)} km/h) prejudica`);
+    else parts.push(`vento onshore violento (${fmtV(wind)} km/h) destrói as ondas`);
   } else {
-    if (wind < 10)      parts.push(`vento fraco (${fmt(wind)} km/h)`);
-    else if (wind < 20) parts.push(`vento moderado (${fmt(wind)} km/h)`);
-    else if (wind < 30) parts.push(`vento forte (${fmt(wind)} km/h) atrapalha`);
-    else                parts.push(`vento muito forte (${fmt(wind)} km/h) compromete as condições`);
+    if (w.intensity === 'fraco') parts.push(`vento lateral fraco (${fmtV(wind)} km/h)`);
+    else parts.push(`vento lateral de ${fmtV(wind)} km/h`);
   }
 
-  // Chuva
-  if (rain > 10)      parts.push(`chuva intensa (${fmt(rain)} mm)`);
-  else if (rain > 5)  parts.push(`chuva moderada (${fmt(rain)} mm)`);
-  else if (rain > 1)  parts.push(`chuva fraca (${fmt(rain)} mm)`);
+  if (rain > 10)     parts.push(`chuva intensa (${fmtV(rain)} mm)`);
+  else if (rain > 5) parts.push(`chuva moderada (${fmtV(rain)} mm)`);
+  else if (rain > 1) parts.push(`chuva fraca (${fmtV(rain)} mm)`);
 
   if (parts.length === 0) return '';
   const [first, ...rest] = parts;
