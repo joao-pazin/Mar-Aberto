@@ -107,7 +107,7 @@ export default async function handler(req) {
     const dayHours = hourly.filter(h => {
       if (!h.time.startsWith(dateStr)) return false;
       const hour = parseInt(h.time.split('T')[1]);
-      return hour >= 6 && hour <= 18;
+      return hour >= 5 && hour <= 17;
     });
 
     if (!dayHours.length) continue;
